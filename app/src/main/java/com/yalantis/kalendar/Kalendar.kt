@@ -11,10 +11,9 @@ import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.TextView
 
-const val DRAG_HEIGHT = 30
+const val DRAG_HEIGHT = 45
 
-class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(context, attributeSet), ViewProvider,
-    View.OnTouchListener {
+class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(context, attributeSet), ViewProvider {
 
     private var totalWidth: Int = 0
 
@@ -28,35 +27,28 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
 
     private var isCreated = false
 
-    private val dragView = createDragView()
+    private val dragView by lazy { createDragView() }
 
     private val moveManager by lazy { MoveManager(this) }
 
-    private fun createWeekContainer(): LinearLayout {
-        val weekContainer = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-        }
 
-        return weekContainer
-    }
+//    private fun createTouchContainer(touchListener: OnTouchListener) {
+//        addView(LinearLayout(context).apply {
+//            layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT)
+//            setOnTouchListener(touchListener)
+//        })
+//    }
 
-    private fun createWeeks() {
-        for (i in 0 until 5) {
-            addView(
-                LinearLayout(context).apply {
-                    orientation = LinearLayout.HORIZONTAL
+    private fun createWeek(): LinearLayout {
+        return LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
 
-                    setBackgroundResource(android.R.color.holo_green_dark)
-
-                    layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply {
-                        setMargins(0, weeksMarginTop, 0, 0)
-                    }
-
-                    for (j in 0 until 7) {
-                        this.addView(createDay(i.toString()))
-                    }
-                }
-            )
+            layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply {
+                setMargins(0, weeksMarginTop, 0, 0)
+            }
+            for (j in 0 until 7) {
+                this.addView(createDay(j.toString()))
+            }
         }
     }
 
@@ -65,10 +57,8 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
             isClickable = true
             isFocusable = true
             setOnClickListener {
-                changeColors(it)
-                selectWeek(it)
+                performDayClick(it)
             }
-            setBackgroundResource(R.drawable.day_background)
             text = label
             gravity = Gravity.CENTER
             textAlignment = TextView.TEXT_ALIGNMENT_GRAVITY
@@ -77,17 +67,25 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         }
     }
 
+    private fun performDayClick(day: View) {
+        if (moveManager.isBusy.not()) {
+            changeColors(day)
+            selectWeek(day)
+        }
+    }
+
     private fun selectWeek(selectedDay: View?) {
         selectedDay?.let {
-            val parent = it.rootView
+            val parent = it.parent as View
             val selectedWeek = indexOfChild(parent)
-            moveManager?.setSelectedWeek(selectedWeek)
+            moveManager.setSelectedWeek(selectedWeek)
         }
     }
 
     private fun changeColors(newSelectedDay: View?) {
         newSelectedDay?.setBackgroundResource(R.drawable.day_background)
         previousSelectedDay?.background = null
+        previousSelectedDay = newSelectedDay
     }
 
 
@@ -95,31 +93,37 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         super.onLayout(changed, left, top, right, bottom)
         if (isCreated.not()) {
             calculateBounds(left, top, right, bottom)
-            orientation = VERTICAL
             setBackgroundResource(android.R.color.holo_purple)
-            setOnTouchListener(this)
-            createMonthSwitch()
-            createWeekDays()
-            createWeeks()
-            createDragView()
-            addView(dragView)
+            createContent()
             isCreated = true
         }
     }
 
+    override fun onTouchEvent(event: MotionEvent) = moveManager.onTouch(event)
+
+    private fun createContent() {
+        orientation = VERTICAL
+        addView(createMonthSwitch())
+        addView(createWeekDays())
+        for (i in 0 until 5) addView(createWeek())
+        addView(dragView)
+    }
+
     private fun createDragView(): View {
         return LinearLayout(context).apply {
-            layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, DRAG_HEIGHT)
+            layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, DRAG_HEIGHT).apply {
+                this.gravity = Gravity.BOTTOM
+            }
             setBackgroundColor(Color.GRAY)
         }
     }
 
-    private fun createMonthSwitch() {
-        addView(LinearLayout(context).apply {
+    private fun createMonthSwitch(): LinearLayout {
+        return LinearLayout(context).apply {
             addView(createLeftMonth("March"))
             addView(createCenterMonth("April"))
             addView(createRightMonth("May"))
-        })
+        }
     }
 
     private fun createLeftMonth(label: String): View? {
@@ -162,8 +166,8 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         weeksMarginTop = totalHeight / 40
     }
 
-    private fun createWeekDays() {
-        addView(LinearLayout(context).apply {
+    private fun createWeekDays(): LinearLayout {
+        return LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             addView(createDay("Mon"))
             addView(createDay("Tue"))
@@ -172,14 +176,14 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
             addView(createDay("Fri"))
             addView(createDay("Sat"))
             addView(createDay("Sun"))
-        })
+        }
     }
-
-    override fun onTouch(v: View?, event: MotionEvent) = moveManager.onTouch(event)
 
     override fun changeViewBottom(newBottom: Int) {
         bottom = newBottom
     }
+
+    override fun getViewBottom() = bottom
 
     override fun changeDragTop(newDragTop: Float) {
         dragView.y = newDragTop
@@ -192,6 +196,8 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
     override fun getWeekBottom(position: Int) = getChildAt(position).y + getChildAt(position).height
 
     override fun getWeekTop(position: Int) = getChildAt(position).y
+
+    override fun getWeeksMarginTop() = weeksMarginTop
 
     override fun setWeekTop(position: Int, newTop: Float) {
         getChildAt(position).y = newTop
