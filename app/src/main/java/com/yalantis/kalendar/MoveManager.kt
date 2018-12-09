@@ -11,6 +11,8 @@ class MoveManager(private val viewProvider: ViewProvider) {
 
     private val bottomLimit = viewProvider.getViewBottom()
 
+    private val weekHeight = viewProvider.getWeekHeight(2)
+
     // in range 2..6 where 1st week on screen equals to 2nd position here
     private var selectedWeek = 4
 
@@ -76,10 +78,8 @@ class MoveManager(private val viewProvider: ViewProvider) {
             viewProvider.changeDragTop(touchY - DRAG_HEIGHT)
 
             val dragViewTop = viewProvider.getDragViewTop()
-            var weekHeight: Int
             var weekBottom: Float
             for (i in 2..6) {
-                weekHeight = viewProvider.getWeekHeight(i)
                 weekBottom = viewProvider.getWeekTop(i) + weekHeight
                 if (i == selectedWeek) {
 
@@ -96,7 +96,7 @@ class MoveManager(private val viewProvider: ViewProvider) {
             }
         } else {
             viewProvider.changeViewBottom(topLimit.toInt())
-            viewProvider.changeDragTop(topLimit - DRAG_HEIGHT)
+            viewProvider.changeDragTop(topLimit)
         }
     }
 

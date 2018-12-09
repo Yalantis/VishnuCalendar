@@ -120,41 +120,20 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
 
     private fun createMonthSwitch(): LinearLayout {
         return LinearLayout(context).apply {
-            addView(createLeftMonth("March"))
-            addView(createCenterMonth("April"))
-            addView(createRightMonth("May"))
+            addView(createMonthDay("March"))
+            addView(createMonthDay("April"))
+            addView(createMonthDay("May"))
         }
     }
 
-    private fun createLeftMonth(label: String): View? {
+
+    private fun createMonthDay(label: String): View? {
         return TextView(context).apply {
             text = label
             textSize = 25f
+            textAlignment = TextView.TEXT_ALIGNMENT_CENTER
             layoutParams = LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply {
                 weight = 1f
-                gravity = Gravity.START
-            }
-        }
-    }
-
-    private fun createCenterMonth(label: String): View? {
-        return TextView(context).apply {
-            text = label
-            textSize = 25f
-            layoutParams = LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply {
-                weight = 3f
-                gravity = Gravity.CENTER
-            }
-        }
-    }
-
-    private fun createRightMonth(label: String): View? {
-        return TextView(context).apply {
-            text = label
-            textSize = 25f
-            layoutParams = LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply {
-                weight = 1f
-                gravity = Gravity.END
             }
         }
     }
