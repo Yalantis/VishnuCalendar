@@ -7,7 +7,7 @@ class MoveManager(private val viewProvider: ViewProvider) {
 
     var isBusy = false
 
-    private val topLimit = viewProvider.getWeekBottom(2) + viewProvider.getWeeksMarginTop()
+    private val topLimit = viewProvider.getTopLimit()
 
     private val bottomLimit = viewProvider.getViewBottom()
 
@@ -45,7 +45,7 @@ class MoveManager(private val viewProvider: ViewProvider) {
                 isBusy = true
                 // touched drag area
                 val a = event.y
-                val b = viewProvider.getDragViewTop()
+                val b = viewProvider.getDragTop()
                 return true
 //                a > b && a < b + DRAG_HEIGHT
             }
@@ -55,7 +55,7 @@ class MoveManager(private val viewProvider: ViewProvider) {
 
     private fun expand() {
         val anim = ValueAnimator
-            .ofFloat(viewProvider.getDragViewTop(), bottomLimit.toFloat())
+            .ofFloat(viewProvider.getDragTop(), bottomLimit.toFloat())
             .setDuration(500)
         anim.addUpdateListener {
             calculateOffsets(it.animatedValue as Float)
@@ -64,7 +64,7 @@ class MoveManager(private val viewProvider: ViewProvider) {
     }
 
     private fun collapse() {
-        val anim = ValueAnimator.ofFloat(viewProvider.getDragViewTop(), topLimit)
+        val anim = ValueAnimator.ofFloat(viewProvider.getDragTop(), topLimit)
             .setDuration(500)
         anim.addUpdateListener {
             calculateOffsets(it.animatedValue as Float)
@@ -73,11 +73,12 @@ class MoveManager(private val viewProvider: ViewProvider) {
     }
 
     private fun calculateOffsets(touchY: Float) {
+
         if (touchY >= topLimit) {
             viewProvider.changeViewBottom(touchY.toInt())
             viewProvider.changeDragTop(touchY - DRAG_HEIGHT)
 
-            val dragViewTop = viewProvider.getDragViewTop()
+            val dragViewTop = viewProvider.getDragTop()
             var weekBottom: Float
             for (i in 2..6) {
                 weekBottom = viewProvider.getWeekTop(i) + weekHeight
@@ -95,7 +96,7 @@ class MoveManager(private val viewProvider: ViewProvider) {
                 }
             }
         } else {
-            viewProvider.changeViewBottom(topLimit.toInt())
+            viewProvider.changeViewBottom(topLimit.toInt() + DRAG_HEIGHT)
             viewProvider.changeDragTop(topLimit)
         }
     }

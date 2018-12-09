@@ -4,11 +4,13 @@ interface ViewProvider {
 
     fun changeViewBottom(newBottom: Int)
 
+    fun getTopLimit(): Float
+
     fun getViewBottom(): Int
 
     fun changeDragTop(newDragTop: Float)
 
-    fun getDragViewTop(): Float
+    fun getDragTop(): Float
 
     fun getWeekBottom(position: Int): Float
 
