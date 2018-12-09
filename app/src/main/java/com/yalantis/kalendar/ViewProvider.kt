@@ -2,13 +2,15 @@ package com.yalantis.kalendar
 
 interface ViewProvider {
 
-    fun changeViewBottom(newBottom: Int)
+    fun setViewBottom(newBottom: Int)
 
-    fun getViewBottom(): Int
+    fun getTopLimit(): Int
 
-    fun changeDragTop(newDragTop: Float)
+    fun getBottomLimit(): Int
 
-    fun getDragViewTop(): Float
+    fun getDragTop(): Float
+
+    fun setDragTop(newDragTop: Float)
 
     fun getWeekBottom(position: Int): Float
 
@@ -17,6 +19,4 @@ interface ViewProvider {
     fun getWeekTop(position: Int): Float
 
     fun setWeekTop(position: Int, newTop: Float)
-
-    fun getWeeksMarginTop(): Int
 }

@@ -1,5 +1,6 @@
 package com.yalantis.kalendar
 
+import android.animation.Animator
 import android.animation.ValueAnimator
 import android.view.MotionEvent
 
@@ -7,9 +8,20 @@ class MoveManager(private val viewProvider: ViewProvider) {
 
     var isBusy = false
 
-    private val topLimit = viewProvider.getWeekBottom(2) + viewProvider.getWeeksMarginTop()
+    private val busyListener = object : Animator.AnimatorListener {
+        override fun onAnimationRepeat(animation: Animator?) {}
+        override fun onAnimationCancel(animation: Animator?) {}
+        override fun onAnimationStart(animation: Animator?) {
+            isBusy = true
+        }
+        override fun onAnimationEnd(animation: Animator?) {
+            isBusy = false
+        }
+    }
 
-    private val bottomLimit = viewProvider.getViewBottom()
+    private val topLimit = viewProvider.getTopLimit()
+
+    private val bottomLimit = viewProvider.getBottomLimit()
 
     private val weekHeight = viewProvider.getWeekHeight(2)
 
@@ -22,7 +34,6 @@ class MoveManager(private val viewProvider: ViewProvider) {
         return when (event.action) {
 
             MotionEvent.ACTION_UP -> {
-                isBusy = false
                 if (isNeedCollapse(event.y)) {
                     collapse()
                 } else {
@@ -43,50 +54,48 @@ class MoveManager(private val viewProvider: ViewProvider) {
 
             MotionEvent.ACTION_DOWN -> {
                 isBusy = true
-                // touched drag area
-                val a = event.y
-                val b = viewProvider.getDragViewTop()
                 return true
-//                a > b && a < b + DRAG_HEIGHT
             }
-            else -> true
+            else -> false
         }
     }
 
     private fun expand() {
         val anim = ValueAnimator
-            .ofFloat(viewProvider.getDragViewTop(), bottomLimit.toFloat())
-            .setDuration(500)
+            .ofFloat(viewProvider.getDragTop(), bottomLimit.toFloat())
+            .setDuration(300)
         anim.addUpdateListener {
             calculateOffsets(it.animatedValue as Float)
         }
+        anim.addListener(busyListener)
         anim.start()
     }
 
     private fun collapse() {
-        val anim = ValueAnimator.ofFloat(viewProvider.getDragViewTop(), topLimit)
-            .setDuration(500)
+        val anim = ValueAnimator.ofFloat(viewProvider.getDragTop(), topLimit.toFloat())
+            .setDuration(300)
         anim.addUpdateListener {
             calculateOffsets(it.animatedValue as Float)
         }
+        anim.addListener(busyListener)
         anim.start()
     }
 
     private fun calculateOffsets(touchY: Float) {
         if (touchY >= topLimit) {
-            viewProvider.changeViewBottom(touchY.toInt())
-            viewProvider.changeDragTop(touchY - DRAG_HEIGHT)
+            viewProvider.setViewBottom(touchY.toInt() + DRAG_HEIGHT)
+            viewProvider.setDragTop(touchY)
 
-            val dragViewTop = viewProvider.getDragViewTop()
+            val dragViewTop = viewProvider.getDragTop()
             var weekBottom: Float
             for (i in 2..6) {
-                weekBottom = viewProvider.getWeekTop(i) + weekHeight
+                weekBottom = viewProvider.getWeekBottom(i)
                 if (i == selectedWeek) {
 
                     if (weekBottom >= dragViewTop && dragViewTop <= selectedWeekBottom) {
-                        viewProvider.setWeekTop(i, touchY - weekHeight - DRAG_HEIGHT)
+                        viewProvider.setWeekTop(i, touchY - weekHeight)
                     } else if (weekBottom <= dragViewTop && dragViewTop < selectedWeekBottom) {
-                        viewProvider.setWeekTop(i, touchY - weekHeight - DRAG_HEIGHT)
+                        viewProvider.setWeekTop(i, touchY - weekHeight)
                     }
 
                     if (weekBottom != selectedWeekBottom && dragViewTop >= selectedWeekBottom) {
@@ -95,8 +104,8 @@ class MoveManager(private val viewProvider: ViewProvider) {
                 }
             }
         } else {
-            viewProvider.changeViewBottom(topLimit.toInt())
-            viewProvider.changeDragTop(topLimit)
+            viewProvider.setViewBottom(topLimit + DRAG_HEIGHT)
+            viewProvider.setDragTop(topLimit.toFloat() - DRAG_HEIGHT)
         }
     }
 

@@ -112,7 +112,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
     private fun createDragView(): View {
         return LinearLayout(context).apply {
             layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, DRAG_HEIGHT).apply {
-                this.gravity = Gravity.BOTTOM
+                setGravity(Gravity.BOTTOM)
             }
             setBackgroundColor(Color.GRAY)
         }
@@ -120,6 +120,8 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
 
     private fun createMonthSwitch(): LinearLayout {
         return LinearLayout(context).apply {
+            isClickable = true
+            isFocusable = true
             addView(createMonthDay("March"))
             addView(createMonthDay("April"))
             addView(createMonthDay("May"))
@@ -148,35 +150,46 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
     private fun createWeekDays(): LinearLayout {
         return LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
-            addView(createDay("Mon"))
-            addView(createDay("Tue"))
-            addView(createDay("Wed"))
-            addView(createDay("Thu"))
-            addView(createDay("Fri"))
-            addView(createDay("Sat"))
-            addView(createDay("Sun"))
+            isClickable = true
+            isFocusable = true
+            addView(createWeekDay("Mon"))
+            addView(createWeekDay("Tue"))
+            addView(createWeekDay("Wed"))
+            addView(createWeekDay("Thu"))
+            addView(createWeekDay("Fri"))
+            addView(createWeekDay("Sat"))
+            addView(createWeekDay("Sun"))
         }
     }
 
-    override fun changeViewBottom(newBottom: Int) {
+    private fun createWeekDay(label: String) =
+        TextView(context).apply {
+            text = label
+            gravity = Gravity.CENTER
+            textAlignment = TextView.TEXT_ALIGNMENT_GRAVITY
+            setTextColor(resources.getColor(android.R.color.background_dark))
+            layoutParams = LinearLayout.LayoutParams(totalWidth / 7, dayContainerHeight)
+        }
+
+    override fun setViewBottom(newBottom: Int) {
         bottom = newBottom
     }
 
-    override fun getViewBottom() = bottom
+    override fun getBottomLimit() = bottom
 
-    override fun changeDragTop(newDragTop: Float) {
+    override fun getTopLimit() = getChildAt(2).bottom
+
+    override fun setDragTop(newDragTop: Float) {
         dragView.y = newDragTop
     }
 
-    override fun getDragViewTop() = dragView.y
+    override fun getDragTop() = dragView.y
 
     override fun getWeekHeight(position: Int) = getChildAt(position).height
 
     override fun getWeekBottom(position: Int) = getChildAt(position).y + getChildAt(position).height
 
     override fun getWeekTop(position: Int) = getChildAt(position).y
-
-    override fun getWeeksMarginTop() = weeksMarginTop
 
     override fun setWeekTop(position: Int, newTop: Float) {
         getChildAt(position).y = newTop
