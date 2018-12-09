@@ -1,8 +1,7 @@
 package com.yalantis.kalendar
 
 import org.junit.Test
-
-import org.junit.Assert.*
+import java.util.*
 
 /**
  * Example local unit test, which will execute on the development machine (host).
@@ -12,6 +11,16 @@ import org.junit.Assert.*
 class ExampleUnitTest {
     @Test
     fun addition_isCorrect() {
-        assertEquals(4, 2 + 2)
+        val calendar = Calendar.getInstance()
+        for (i in 0 until 7) {
+            // mb day of week
+            println("Day of week: " + calendar[Calendar.DAY_OF_WEEK])
+            if (calendar[Calendar.DAY_OF_WEEK] != Calendar.SUNDAY) {
+                calendar.add(Calendar.DAY_OF_WEEK, -1)
+            } else break
+        }
+
+        val startDay = calendar[Calendar.DAY_OF_MONTH]
+        println("StartDay: $startDay")
     }
 }

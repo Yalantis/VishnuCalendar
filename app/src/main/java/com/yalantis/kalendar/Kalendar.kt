@@ -10,6 +10,8 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.TextView
+import java.util.*
+import java.util.Calendar.*
 
 const val DRAG_HEIGHT = 45
 
@@ -31,6 +33,15 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
 
     private val moveManager by lazy { MoveManager(this) }
 
+    private val calendar = Calendar.getInstance()
+
+    private var monthCurrent = calendar[MONTH] + 1
+
+    private var monthPrev = monthCurrent - 1
+
+    private var monthNext = monthCurrent + 1
+
+
 
 //    private fun createTouchContainer(touchListener: OnTouchListener) {
 //        addView(LinearLayout(context).apply {
@@ -39,30 +50,92 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
 //        })
 //    }
 
-    private fun createWeek(): LinearLayout {
+    private fun createWeek(emptyDays: Int, emptyAtStart: Boolean): LinearLayout {
         return LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
 
             layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply {
                 setMargins(0, weeksMarginTop, 0, 0)
             }
-            for (j in 0 until 7) {
-                this.addView(createDay(j.toString()))
+            attachDayToWeek(this, emptyAtStart, emptyDays)
+        }
+    }
+
+    private fun attachDayToWeek(week: LinearLayout, emptyAtStart: Boolean, emptyDays: Int) {
+        if (emptyAtStart) {
+            for (i in 0 until emptyDays) {
+                week.addView(createDay(true))
+                calendar.add(DAY_OF_MONTH, 1)
+            }
+            for (i in 1..7 - emptyDays) {
+                week.addView(createDay(false))
+                calendar.add(DAY_OF_MONTH, 1)
+            }
+        } else {
+            for (i in 1..7 - emptyDays) {
+                week.addView(createDay(false))
+                calendar.add(DAY_OF_MONTH, 1)
+            }
+            for (i in 0 until emptyDays) {
+                week.addView(createDay(true))
+                calendar.add(DAY_OF_MONTH, 1)
             }
         }
     }
 
-    private fun createDay(label: String = "8"): TextView {
+    fun setDate(from: Date) {
+        calendar.time = from
+        monthCurrent = calendar[Calendar.MONTH]
+        monthPrev = monthCurrent - 1
+        monthNext = monthCurrent + 1
+
+        // find count of normal days
+        var prevDay = calendar[DAY_OF_MONTH]
+        var currDay: Int
+        var daysNormal = 0
+        for (i in 0..31) {
+            currDay = calendar[DAY_OF_MONTH]
+            if (currDay < prevDay) {
+                daysNormal = prevDay
+                calendar.add(Calendar.DAY_OF_MONTH, -1)
+                break
+            } else {
+                prevDay = currDay
+                calendar.add(Calendar.DAY_OF_MONTH, 1)
+            }
+        }
+
+        val daysAfter = calendar.getDaysAfter()
+
+        //scroll back to first day of month
+        for (i in 1..31) {
+            // mb day of week
+            if (calendar[DAY_OF_MONTH] != 1) {
+                calendar.add(Calendar.DAY_OF_MONTH, -1)
+            } else break
+        }
+
+        val daysBefore = calendar.getDaysBefore()
+
+        calendar.add(DAY_OF_YEAR, -daysBefore)
+        createContent(daysBefore, daysNormal, daysAfter)
+    }
+
+    private fun createDay(isEmpty: Boolean): TextView {
         return TextView(context).apply {
+            if (isEmpty) {
+                setTextColor(resources.getColor(android.R.color.darker_gray))
+            } else {
+                setTextColor(resources.getColor(android.R.color.background_dark))
+                setOnClickListener {
+                    performDayClick(it)
+                }
+            }
             isClickable = true
             isFocusable = true
-            setOnClickListener {
-                performDayClick(it)
-            }
-            text = label
+            text = calendar[DAY_OF_MONTH].toString()
             gravity = Gravity.CENTER
             textAlignment = TextView.TEXT_ALIGNMENT_GRAVITY
-            setTextColor(resources.getColor(android.R.color.background_dark))
             layoutParams = LinearLayout.LayoutParams(totalWidth / 7, dayContainerHeight)
         }
     }
@@ -94,19 +167,31 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         if (isCreated.not()) {
             calculateBounds(left, top, right, bottom)
             setBackgroundResource(android.R.color.holo_purple)
-            createContent()
+            setDate(calendar.time)
             isCreated = true
         }
     }
 
     override fun onTouchEvent(event: MotionEvent) = moveManager.onTouch(event)
 
-    private fun createContent() {
+    private fun createContent(daysBefore: Int, daysNormal: Int, daysAfter: Int) {
         orientation = VERTICAL
         addView(createMonthSwitch())
         addView(createWeekDays())
-        for (i in 0 until 5) addView(createWeek())
+        createWeeks(daysBefore, daysNormal, daysAfter)
         addView(dragView)
+    }
+
+    private fun createWeeks(daysBefore: Int, daysNormal: Int, daysAfter: Int) {
+        val totalDays = daysBefore + daysAfter + daysNormal
+        val weeksAmount = totalDays / 7
+        for (i in 1..weeksAmount) {
+            when (i) {
+                1 -> addView(createWeek(daysBefore, true))
+                weeksAmount -> addView(createWeek(daysAfter, false))
+                else -> addView(createWeek(0, false))
+            }
+        }
     }
 
     private fun createDragView(): View {
@@ -152,13 +237,13 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
             orientation = LinearLayout.HORIZONTAL
             isClickable = true
             isFocusable = true
+            addView(createWeekDay("Sun"))
             addView(createWeekDay("Mon"))
             addView(createWeekDay("Tue"))
             addView(createWeekDay("Wed"))
             addView(createWeekDay("Thu"))
             addView(createWeekDay("Fri"))
             addView(createWeekDay("Sat"))
-            addView(createWeekDay("Sun"))
         }
     }
 
