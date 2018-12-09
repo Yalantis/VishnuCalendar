@@ -6,16 +6,17 @@ import android.util.AttributeSet
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.TextView
 import java.util.*
-import java.util.Calendar.*
 
 const val DRAG_HEIGHT = 45
 
-class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(context, attributeSet), ViewProvider {
+class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(context, attributeSet),
+    ViewProvider, Day.OnDayClickListener, DateView {
 
     private var totalWidth: Int = 0
 
@@ -33,22 +34,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
 
     private val moveManager by lazy { MoveManager(this) }
 
-    private val calendar = Calendar.getInstance()
-
-    private var monthCurrent = calendar[MONTH] + 1
-
-    private var monthPrev = monthCurrent - 1
-
-    private var monthNext = monthCurrent + 1
-
-
-
-//    private fun createTouchContainer(touchListener: OnTouchListener) {
-//        addView(LinearLayout(context).apply {
-//            layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT)
-//            setOnTouchListener(touchListener)
-//        })
-//    }
+    private val dateManager: DateManager by lazy { DateManagerImpl(this) }
 
     private fun createWeek(emptyDays: Int, emptyAtStart: Boolean): LinearLayout {
         return LinearLayout(context).apply {
@@ -65,82 +51,60 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         if (emptyAtStart) {
             for (i in 0 until emptyDays) {
                 week.addView(createDay(true))
-                calendar.add(DAY_OF_MONTH, 1)
+                dateManager.addDay()
             }
             for (i in 1..7 - emptyDays) {
                 week.addView(createDay(false))
-                calendar.add(DAY_OF_MONTH, 1)
+                dateManager.addDay()
             }
         } else {
             for (i in 1..7 - emptyDays) {
                 week.addView(createDay(false))
-                calendar.add(DAY_OF_MONTH, 1)
+                dateManager.addDay()
             }
             for (i in 0 until emptyDays) {
                 week.addView(createDay(true))
-                calendar.add(DAY_OF_MONTH, 1)
+                dateManager.addDay()
             }
         }
     }
 
-    fun setDate(from: Date) {
-        calendar.time = from
-        monthCurrent = calendar[Calendar.MONTH]
-        monthPrev = monthCurrent - 1
-        monthNext = monthCurrent + 1
+    fun setDate(date: Date) {
+        dateManager.setDate(date)
+    }
 
-        // find count of normal days
-        var prevDay = calendar[DAY_OF_MONTH]
-        var currDay: Int
-        var daysNormal = 0
-        for (i in 0..31) {
-            currDay = calendar[DAY_OF_MONTH]
-            if (currDay < prevDay) {
-                daysNormal = prevDay
-                calendar.add(Calendar.DAY_OF_MONTH, -1)
-                break
-            } else {
-                prevDay = currDay
-                calendar.add(Calendar.DAY_OF_MONTH, 1)
+
+    override fun selectDay(date: Date) {
+        var week: ViewGroup
+        var day: Day
+        for (i in 2 until childCount) {
+            week = getChildAt(i) as ViewGroup
+            for (j in 0 until week.childCount) {
+                day = week.getChildAt(j) as Day
+                if (day.date == date) {
+                    post { onDayClick(day) }
+                    return
+                }
             }
         }
-
-        val daysAfter = calendar.getDaysAfter()
-
-        //scroll back to first day of month
-        for (i in 1..31) {
-            // mb day of week
-            if (calendar[DAY_OF_MONTH] != 1) {
-                calendar.add(Calendar.DAY_OF_MONTH, -1)
-            } else break
-        }
-
-        val daysBefore = calendar.getDaysBefore()
-
-        calendar.add(DAY_OF_YEAR, -daysBefore)
-        createContent(daysBefore, daysNormal, daysAfter)
     }
 
     private fun createDay(isEmpty: Boolean): TextView {
-        return TextView(context).apply {
-            if (isEmpty) {
-                setTextColor(resources.getColor(android.R.color.darker_gray))
+        return Day(context).apply {
+            labelColor = if (isEmpty) {
+                resources.getColor(android.R.color.darker_gray)
             } else {
-                setTextColor(resources.getColor(android.R.color.background_dark))
-                setOnClickListener {
-                    performDayClick(it)
-                }
+                resources.getColor(android.R.color.background_dark)
             }
-            isClickable = true
-            isFocusable = true
-            text = calendar[DAY_OF_MONTH].toString()
-            gravity = Gravity.CENTER
-            textAlignment = TextView.TEXT_ALIGNMENT_GRAVITY
+            canClick = isEmpty.not()
+            clickListener = this@Kalendar
+            label = dateManager.getDayLabel()
+            date = dateManager.getCurrentDate()
             layoutParams = LinearLayout.LayoutParams(totalWidth / 7, dayContainerHeight)
         }
     }
 
-    private fun performDayClick(day: View) {
+    override fun onDayClick(day: Day) {
         if (moveManager.isBusy.not()) {
             changeColors(day)
             selectWeek(day)
@@ -161,18 +125,21 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         previousSelectedDay = newSelectedDay
     }
 
-
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(changed, left, top, right, bottom)
         if (isCreated.not()) {
             calculateBounds(left, top, right, bottom)
             setBackgroundResource(android.R.color.holo_purple)
-            setDate(calendar.time)
+            setDate(dateManager.getCurrentDate())
             isCreated = true
         }
     }
 
     override fun onTouchEvent(event: MotionEvent) = moveManager.onTouch(event)
+
+    override fun clearDate() {
+        removeAllViews()
+    }
 
     private fun createContent(daysBefore: Int, daysNormal: Int, daysAfter: Int) {
         orientation = VERTICAL
@@ -207,17 +174,30 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         return LinearLayout(context).apply {
             isClickable = true
             isFocusable = true
-            addView(createMonthDay("March"))
-            addView(createMonthDay("April"))
-            addView(createMonthDay("May"))
+            addView(createMonthActionButton(false))
+            addView(createMonthDay(dateManager.getCurrentMonthLabel()))
+            addView(createMonthActionButton(true))
         }
     }
 
 
-    private fun createMonthDay(label: String): View? {
+    private fun createMonthActionButton(isNext: Boolean): View? {
+        return if (isNext) {
+            createMonthDay(dateManager.getNextMonthLabel()) {
+                dateManager.goNextMonth()
+            }
+        } else {
+            createMonthDay(dateManager.getPreviousMonthLabel()) {
+                dateManager.goNextMonth()
+            }
+        }
+    }
+
+    private fun createMonthDay(label: String, clickListener: (() -> Unit)? = null): View? {
         return TextView(context).apply {
             text = label
             textSize = 25f
+            setOnClickListener { clickListener?.invoke() }
             textAlignment = TextView.TEXT_ALIGNMENT_CENTER
             layoutParams = LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply {
                 weight = 1f
@@ -259,6 +239,11 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
     override fun setViewBottom(newBottom: Int) {
         bottom = newBottom
     }
+
+    override fun displayDate(emptyBefore: Int, normal: Int, emptyAfter: Int) {
+        createContent(emptyBefore, normal, emptyAfter)
+    }
+
 
     override fun getBottomLimit() = bottom
 

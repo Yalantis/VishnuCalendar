@@ -47,3 +47,20 @@ fun Calendar.getDaysBefore() = when (this[DAY_OF_WEEK]) {
     Calendar.SUNDAY -> 0
     else -> -1
 }
+
+fun Calendar.currentMonthName() =
+    when (this[Calendar.MONTH] + 1) {
+        Calendar.JANUARY -> "January"
+        Calendar.FEBRUARY -> "February"
+        Calendar.MARCH -> "March"
+        Calendar.APRIL -> "April"
+        Calendar.MAY -> "May"
+        Calendar.JUNE -> "June"
+        Calendar.JULY -> "July"
+        Calendar.AUGUST -> "August"
+        Calendar.SEPTEMBER -> "September"
+        Calendar.OCTOBER -> "October"
+        Calendar.NOVEMBER -> "November"
+        Calendar.DECEMBER -> "December"
+        else -> "January"
+    }
