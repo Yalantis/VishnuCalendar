@@ -8,14 +8,20 @@ class DateManagerImpl(private val dateView: DateView) : DateManager {
 
     private val calendar = Calendar.getInstance()
 
+    private var currentMonthLabel = ""
+    private var nextMonthLabel = ""
+    private var previousMonthLabel = ""
+
     override fun addDay() {
         calendar.add(DAY_OF_MONTH, 1)
     }
 
     override fun setDate(date: Date) {
-        dateView.clearDate()
-
         calendar.time = date
+
+        currentMonthLabel = calendar.currentMonthName()
+        nextMonthLabel = calendar.nextMonthName()
+        previousMonthLabel = calendar.previousMonthName()
 
         // find count of normal days
         var prevDay = calendar[DAY_OF_MONTH]
@@ -38,12 +44,6 @@ class DateManagerImpl(private val dateView: DateView) : DateManager {
         //scroll back to first day of month
         calendar.set(DAY_OF_MONTH, 1)
 
-//        for (i in 1..31) {
-//            if (calendar[DAY_OF_MONTH] != 1) {
-//                calendar.add(DAY_OF_MONTH, -1)
-//            } else break
-//        }
-
         val daysBefore = calendar.getDaysBefore()
 
         calendar.add(Calendar.DAY_OF_YEAR, -daysBefore)
@@ -53,33 +53,23 @@ class DateManagerImpl(private val dateView: DateView) : DateManager {
         dateView.selectDay(date)
     }
 
-    override fun getCurrentMonthLabel() = calendar.currentMonthName()
+    override fun getCurrentMonthLabel() = currentMonthLabel
 
-    override fun getPreviousMonthLabel(): String {
-        calendar.add(MONTH, -1)
-        val name = calendar.currentMonthName()
-        calendar.add(MONTH, 1)
-        return name
-    }
+    override fun getPreviousMonthLabel() = previousMonthLabel
 
-    override fun getNextMonthLabel(): String {
-        calendar.add(MONTH, 1)
-        val name = calendar.currentMonthName()
-        calendar.add(MONTH, -1)
-        return name
-    }
-
+    override fun getNextMonthLabel() = nextMonthLabel
 
     override fun goNextMonth() {
+        dateView.clearDate()
         calendar.add(MONTH, 1)
         setDate(calendar.time)
     }
 
     override fun goPreviousMonth() {
+        dateView.clearDate()
         calendar.add(MONTH, -1)
         setDate(calendar.time)
     }
-
 
     override fun getDayLabel() = calendar[DAY_OF_MONTH].toString()
 

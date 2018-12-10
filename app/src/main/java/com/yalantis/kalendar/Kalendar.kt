@@ -2,6 +2,7 @@ package com.yalantis.kalendar
 
 import android.content.Context
 import android.graphics.Color
+import android.support.v4.content.ContextCompat
 import android.util.AttributeSet
 import android.view.Gravity
 import android.view.MotionEvent
@@ -39,7 +40,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
     private fun createWeek(emptyDays: Int, emptyAtStart: Boolean): LinearLayout {
         return LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
-
+            background = ContextCompat.getDrawable(context, R.drawable.week_back)
             layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply {
                 setMargins(0, weeksMarginTop, 0, 0)
             }
@@ -129,7 +130,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         super.onLayout(changed, left, top, right, bottom)
         if (isCreated.not()) {
             calculateBounds(left, top, right, bottom)
-            setBackgroundResource(android.R.color.holo_purple)
+            setBackgroundResource(android.R.color.white)
             setDate(dateManager.getCurrentDate())
             isCreated = true
         }
@@ -147,6 +148,9 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         addView(createWeekDays())
         createWeeks(daysBefore, daysNormal, daysAfter)
         addView(dragView)
+        dragView.layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, DRAG_HEIGHT).apply {
+            gravity = Gravity.BOTTOM
+        }
     }
 
     private fun createWeeks(daysBefore: Int, daysNormal: Int, daysAfter: Int) {
@@ -175,7 +179,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
             isClickable = true
             isFocusable = true
             addView(createMonthActionButton(false))
-            addView(createMonthDay(dateManager.getCurrentMonthLabel()))
+            addView(createMonthDay(MonthDay.TYPE_MID, dateManager.getCurrentMonthLabel()))
             addView(createMonthActionButton(true))
         }
     }
@@ -183,25 +187,22 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
 
     private fun createMonthActionButton(isNext: Boolean): View? {
         return if (isNext) {
-            createMonthDay(dateManager.getNextMonthLabel()) {
+            createMonthDay(MonthDay.TYPE_RIGHT, dateManager.getNextMonthLabel()) {
                 dateManager.goNextMonth()
             }
         } else {
-            createMonthDay(dateManager.getPreviousMonthLabel()) {
-                dateManager.goNextMonth()
+            createMonthDay(MonthDay.TYPE_LEFT, dateManager.getPreviousMonthLabel()) {
+                dateManager.goPreviousMonth()
             }
         }
     }
 
-    private fun createMonthDay(label: String, clickListener: (() -> Unit)? = null): View? {
-        return TextView(context).apply {
-            text = label
-            textSize = 25f
-            setOnClickListener { clickListener?.invoke() }
-            textAlignment = TextView.TEXT_ALIGNMENT_CENTER
-            layoutParams = LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT).apply {
-                weight = 1f
-            }
+    private fun createMonthDay(type: Int, label: String, clickListener: (() -> Unit)? = null): View? {
+        return MonthDay(context).apply {
+            this.type = type
+            this.label = label
+            textSize = 18f
+            click = clickListener
         }
     }
 

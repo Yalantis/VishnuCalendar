@@ -48,8 +48,25 @@ fun Calendar.getDaysBefore() = when (this[DAY_OF_WEEK]) {
     else -> -1
 }
 
+fun Calendar.previousMonthName() =
+    when (this[Calendar.MONTH]) {
+        Calendar.JANUARY -> "December"
+        Calendar.FEBRUARY -> "January"
+        Calendar.MARCH -> "February"
+        Calendar.APRIL -> "March"
+        Calendar.MAY -> "April"
+        Calendar.JUNE -> "May"
+        Calendar.JULY -> "June"
+        Calendar.AUGUST -> "July"
+        Calendar.SEPTEMBER -> "August"
+        Calendar.OCTOBER -> "September"
+        Calendar.NOVEMBER -> "December"
+        Calendar.DECEMBER -> "November"
+        else -> ""
+    }
+
 fun Calendar.currentMonthName() =
-    when (this[Calendar.MONTH] + 1) {
+    when (this[Calendar.MONTH]) {
         Calendar.JANUARY -> "January"
         Calendar.FEBRUARY -> "February"
         Calendar.MARCH -> "March"
@@ -62,5 +79,22 @@ fun Calendar.currentMonthName() =
         Calendar.OCTOBER -> "October"
         Calendar.NOVEMBER -> "November"
         Calendar.DECEMBER -> "December"
-        else -> "January"
+        else -> ""
+    }
+
+fun Calendar.nextMonthName() =
+    when (this[Calendar.MONTH]) {
+        Calendar.JANUARY -> "February"
+        Calendar.FEBRUARY -> "March"
+        Calendar.MARCH -> "April"
+        Calendar.APRIL -> "May"
+        Calendar.MAY -> "June"
+        Calendar.JUNE -> "July"
+        Calendar.JULY -> "August"
+        Calendar.AUGUST -> "September"
+        Calendar.SEPTEMBER -> "October"
+        Calendar.OCTOBER -> "November"
+        Calendar.NOVEMBER -> "December"
+        Calendar.DECEMBER -> "January"
+        else -> ""
     }
