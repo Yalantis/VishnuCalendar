@@ -18,26 +18,12 @@ class DateManagerImpl(private val dateView: DateView) : DateManager {
 
     override fun setDate(date: Date) {
         calendar.time = date
-
         currentMonthLabel = calendar.currentMonthName()
         nextMonthLabel = calendar.nextMonthName()
         previousMonthLabel = calendar.previousMonthName()
 
         // find count of normal days
-        var prevDay = calendar[DAY_OF_MONTH]
-        var currDay: Int
-        var daysNormal = 0
-        for (i in 0..31) {
-            currDay = calendar[DAY_OF_MONTH]
-            if (currDay < prevDay) {
-                daysNormal = prevDay
-                calendar.add(DAY_OF_MONTH, -1)
-                break
-            } else {
-                prevDay = currDay
-                calendar.add(DAY_OF_MONTH, 1)
-            }
-        }
+        val daysNormal = findNormalDaysCount()
 
         val daysAfter = calendar.getDaysAfter()
 
@@ -46,11 +32,31 @@ class DateManagerImpl(private val dateView: DateView) : DateManager {
 
         val daysBefore = calendar.getDaysBefore()
 
+        // offset to total days start
         calendar.add(Calendar.DAY_OF_YEAR, -daysBefore)
 
         dateView.displayDate(daysBefore, daysNormal, daysAfter)
 
+        //restore selected date
+        calendar.time = date
+        //select day on screen
         dateView.selectDay(date)
+    }
+
+    private fun findNormalDaysCount(): Int {
+        var prevDay = calendar[DAY_OF_MONTH]
+        var currDay: Int
+        for (i in 0..31) {
+            currDay = calendar[DAY_OF_MONTH]
+            if (currDay < prevDay) {
+                calendar.add(DAY_OF_MONTH, -1)
+                return prevDay
+            } else {
+                prevDay = currDay
+                calendar.add(DAY_OF_MONTH, 1)
+            }
+        }
+        return 0
     }
 
     override fun getCurrentMonthLabel() = currentMonthLabel
