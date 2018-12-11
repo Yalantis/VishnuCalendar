@@ -1,9 +1,33 @@
 package com.yalantis.kalendar
 
 import android.content.res.Resources
+import android.transition.TransitionManager
 import android.util.TypedValue
+import android.view.View
+import android.view.ViewGroup
 import java.util.*
 import java.util.Calendar.DAY_OF_WEEK
+
+fun Int.dpToPx(resources: Resources): Int {
+    return TypedValue.applyDimension(
+        TypedValue.COMPLEX_UNIT_DIP,
+        this.toFloat(),
+        resources.displayMetrics
+    ).toInt()
+}
+
+infix fun View.dp(value: Int): Int {
+    return TypedValue.applyDimension(
+        TypedValue.COMPLEX_UNIT_DIP,
+        value.toFloat(),
+        this.resources.displayMetrics
+    ).toInt()
+}
+
+fun ViewGroup.applyTransition(block: () -> Unit) {
+    TransitionManager.beginDelayedTransition(this)
+    block.invoke()
+}
 
 fun Float.dpToPx(resources: Resources): Float {
     return TypedValue.applyDimension(
@@ -60,7 +84,7 @@ fun Calendar.previousMonthName() =
         Calendar.AUGUST -> "July"
         Calendar.SEPTEMBER -> "August"
         Calendar.OCTOBER -> "September"
-        Calendar.NOVEMBER -> "December"
+        Calendar.NOVEMBER -> "October"
         Calendar.DECEMBER -> "November"
         else -> ""
     }

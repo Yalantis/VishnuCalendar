@@ -13,6 +13,7 @@ import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.TextView
 import java.util.*
+import kotlin.collections.ArrayList
 
 const val DRAG_HEIGHT = 45
 
@@ -25,8 +26,6 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
 
     private var dayContainerHeight = 0
 
-    private var weeksMarginTop = 0
-
     private var previousSelectedDay: View? = null
 
     private var isCreated = false
@@ -37,12 +36,14 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
 
     private val dateManager: DateManager by lazy { DateManagerImpl(this) }
 
+    private val actionQueue = ArrayList<KAction>()
+
     private fun createWeek(emptyDays: Int, emptyAtStart: Boolean): LinearLayout {
         return LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             background = ContextCompat.getDrawable(context, R.drawable.week_back)
             layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply {
-                setMargins(0, weeksMarginTop, 0, 0)
+                setPadding(0, 0, 0, dp(5))
             }
             attachDayToWeek(this, emptyAtStart, emptyDays)
         }
@@ -101,15 +102,19 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
             clickListener = this@Kalendar
             label = dateManager.getDayLabel()
             date = dateManager.getCurrentDate()
-            layoutParams = LinearLayout.LayoutParams(totalWidth / 7, dayContainerHeight)
+            size(totalWidth / 7, dayContainerHeight)
         }
     }
 
     override fun onDayClick(day: Day) {
-        if (moveManager.isBusy.not()) {
+        if (moveManager.isBusy.not() && moveManager.isCollapsed.not()) {
             changeColors(day)
             selectWeek(day)
+        } else {
+            actionQueue.add(KAction(ACTION_SELECT_DAY))
+            moveManager.expand()
         }
+        dateManager.selectDay(day)
     }
 
     private fun selectWeek(selectedDay: View?) {
@@ -148,9 +153,6 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         addView(createWeekDays())
         createWeeks(daysBefore, daysNormal, daysAfter)
         addView(dragView)
-        dragView.layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, DRAG_HEIGHT).apply {
-            gravity = Gravity.BOTTOM
-        }
     }
 
     private fun createWeeks(daysBefore: Int, daysNormal: Int, daysAfter: Int) {
@@ -178,27 +180,61 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         return LinearLayout(context).apply {
             isClickable = true
             isFocusable = true
-            addView(createMonthActionButton(false))
-            addView(createMonthDay(MonthDay.TYPE_MID, dateManager.getCurrentMonthLabel()))
-            addView(createMonthActionButton(true))
+
+            setPadding(dp(8), dp(8), dp(8), dp(8))
+
+            addView(createMonthDay(Month.TYPE_LEFT, dateManager.getPreviousMonthLabel()) {
+                scrollMonth(false)
+            })
+            addView(createMonthDay(Month.TYPE_MID, dateManager.getCurrentMonthLabel()))
+
+            addView(createMonthDay(Month.TYPE_RIGHT, dateManager.getNextMonthLabel()) {
+                scrollMonth(true)
+            })
         }
     }
 
 
-    private fun createMonthActionButton(isNext: Boolean): View? {
-        return if (isNext) {
-            createMonthDay(MonthDay.TYPE_RIGHT, dateManager.getNextMonthLabel()) {
-                dateManager.goNextMonth()
+    fun scrollMonth(forward: Boolean = true) {
+        if (moveManager.isCollapsed) {
+            if (forward) {
+                actionQueue.add(KAction((ACTION_NEXT_MONTH)))
+            } else {
+                actionQueue.add(KAction((ACTION_PREV_MONTH)))
             }
+            moveManager.expand()
         } else {
-            createMonthDay(MonthDay.TYPE_LEFT, dateManager.getPreviousMonthLabel()) {
-                dateManager.goPreviousMonth()
+            applyTransition {
+                if (forward) {
+                    dateManager.goNextMonth()
+                } else {
+                    dateManager.goPreviousMonth()
+                }
+            }
+        }
+    }
+
+    override fun moveStateChanged(collapsed: Boolean) {
+        actionQueue.firstOrNull()?.let {
+            applyTransition {
+                when (it.type) {
+                    ACTION_NEXT_MONTH -> {
+                        dateManager.goNextMonth()
+                    }
+                    ACTION_PREV_MONTH -> {
+                        dateManager.goPreviousMonth()
+                    }
+                    ACTION_SELECT_DAY -> {
+                        selectDay(dateManager.getCurrentDate())
+                    }
+                }
+                actionQueue.remove(it)
             }
         }
     }
 
     private fun createMonthDay(type: Int, label: String, clickListener: (() -> Unit)? = null): View? {
-        return MonthDay(context).apply {
+        return Month(context).apply {
             this.type = type
             this.label = label
             textSize = 18f
@@ -210,7 +246,6 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         totalWidth = right - left
         totalHeight = bottom - top
         dayContainerHeight = totalHeight / 10
-        weeksMarginTop = totalHeight / 40
     }
 
     private fun createWeekDays(): LinearLayout {
@@ -251,10 +286,10 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
     override fun getTopLimit() = getChildAt(2).bottom
 
     override fun setDragTop(newDragTop: Float) {
-        dragView.y = newDragTop
+        getChildAt(childCount - 1).y = newDragTop
     }
 
-    override fun getDragTop() = dragView.y
+    override fun getDragTop() = getChildAt(childCount - 1).y
 
     override fun getWeekHeight(position: Int) = getChildAt(position).height
 

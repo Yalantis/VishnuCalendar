@@ -1,11 +1,12 @@
 package com.yalantis.kalendar
 
 import android.content.Context
+import android.graphics.Typeface
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.TextView
 
-class MonthDay(context: Context) : TextView(context) {
+class Month(context: Context) : TextView(context) {
     companion object {
         const val TYPE_LEFT = 0
         const val TYPE_MID = 1
@@ -31,15 +32,19 @@ class MonthDay(context: Context) : TextView(context) {
         }
     var type = TYPE_MID
         set(value) {
+            typeface = Typeface.DEFAULT_BOLD
             when (value) {
                 TYPE_LEFT -> {
                     textAlignment = TextView.TEXT_ALIGNMENT_VIEW_START
+                    alpha = 0.5f
                 }
                 TYPE_MID -> {
                     textAlignment = TextView.TEXT_ALIGNMENT_CENTER
+                    text
                 }
                 TYPE_RIGHT -> {
                     textAlignment = TextView.TEXT_ALIGNMENT_VIEW_END
+                    alpha = 0.5f
                 }
             }
         }

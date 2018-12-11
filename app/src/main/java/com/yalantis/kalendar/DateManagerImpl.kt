@@ -65,6 +65,10 @@ class DateManagerImpl(private val dateView: DateView) : DateManager {
 
     override fun getNextMonthLabel() = nextMonthLabel
 
+    override fun selectDay(day: Day) {
+        calendar.time = day.date
+    }
+
     override fun goNextMonth() {
         dateView.clearDate()
         calendar.add(MONTH, 1)

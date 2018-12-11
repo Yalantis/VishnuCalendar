@@ -21,4 +21,6 @@ interface DateManager {
     fun goNextMonth()
 
     fun goPreviousMonth()
+
+    fun selectDay(day: Day)
 }

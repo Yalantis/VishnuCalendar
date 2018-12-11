@@ -19,4 +19,6 @@ interface ViewProvider {
     fun getWeekTop(position: Int): Float
 
     fun setWeekTop(position: Int, newTop: Float)
+
+    fun moveStateChanged(collapsed: Boolean)
 }

@@ -8,6 +8,10 @@ class MoveManager(private val viewProvider: ViewProvider) {
 
     var isBusy = false
 
+    var isCollapsed = false
+
+    private var startPoint = 0f
+
     private val busyListener = object : Animator.AnimatorListener {
         override fun onAnimationRepeat(animation: Animator?) {}
         override fun onAnimationCancel(animation: Animator?) {}
@@ -16,6 +20,8 @@ class MoveManager(private val viewProvider: ViewProvider) {
         }
         override fun onAnimationEnd(animation: Animator?) {
             isBusy = false
+            isCollapsed = isCollapsed.not()
+            viewProvider.moveStateChanged(isCollapsed)
         }
     }
 
@@ -54,13 +60,14 @@ class MoveManager(private val viewProvider: ViewProvider) {
 
             MotionEvent.ACTION_DOWN -> {
                 isBusy = true
+                startPoint = event.y
                 return true
             }
             else -> false
         }
     }
 
-    private fun expand() {
+    fun expand() {
         val anim = ValueAnimator
             .ofFloat(viewProvider.getDragTop(), bottomLimit.toFloat())
             .setDuration(300)
@@ -83,33 +90,35 @@ class MoveManager(private val viewProvider: ViewProvider) {
 
     private fun calculateOffsets(touchY: Float) {
         if (touchY >= topLimit) {
+
+
             viewProvider.setViewBottom(touchY.toInt() + DRAG_HEIGHT)
+
             viewProvider.setDragTop(touchY)
 
-            val dragViewTop = viewProvider.getDragTop()
             var weekBottom: Float
             for (i in 2..6) {
                 weekBottom = viewProvider.getWeekBottom(i)
                 if (i == selectedWeek) {
 
-                    if (weekBottom >= dragViewTop && dragViewTop <= selectedWeekBottom) {
-                        viewProvider.setWeekTop(i, touchY - weekHeight)
-                    } else if (weekBottom <= dragViewTop && dragViewTop < selectedWeekBottom) {
+                    if (weekBottom >= touchY && touchY <= selectedWeekBottom) {
+                        viewProvider.setWeekTop(i, touchY- weekHeight)
+                    } else if (weekBottom <= touchY && touchY < selectedWeekBottom) {
                         viewProvider.setWeekTop(i, touchY - weekHeight)
                     }
 
-                    if (weekBottom != selectedWeekBottom && dragViewTop >= selectedWeekBottom) {
+                    if (weekBottom != selectedWeekBottom && touchY >= selectedWeekBottom) {
                         viewProvider.setWeekTop(i, selectedWeekBottom - weekHeight)
                     }
                 }
             }
         } else {
             viewProvider.setViewBottom(topLimit + DRAG_HEIGHT)
-            viewProvider.setDragTop(topLimit.toFloat() - DRAG_HEIGHT)
+            viewProvider.setDragTop(topLimit.toFloat())
         }
     }
 
-    private fun isNeedCollapse(y: Float) = y < (bottomLimit + topLimit) / 2
+    private fun isNeedCollapse(y: Float) = Math.abs(startPoint - y) > weekHeight && isCollapsed.not()
 
     fun setSelectedWeek(selectedWeek: Int) {
         this.selectedWeek = selectedWeek
