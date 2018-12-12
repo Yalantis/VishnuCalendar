@@ -12,8 +12,8 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.TextView
+import java.time.MonthDay
 import java.util.*
-import kotlin.collections.ArrayList
 
 const val DRAG_HEIGHT = 45
 
@@ -25,6 +25,8 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
     private var totalHeight: Int = 0
 
     private var dayContainerHeight = 0
+
+    private var weeksMarginTop = 0
 
     private var previousSelectedDay: View? = null
 
@@ -102,19 +104,15 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
             clickListener = this@Kalendar
             label = dateManager.getDayLabel()
             date = dateManager.getCurrentDate()
-            size(totalWidth / 7, dayContainerHeight)
+            layoutParams = LinearLayout.LayoutParams(totalWidth / 7, dayContainerHeight)
         }
     }
 
     override fun onDayClick(day: Day) {
-        if (moveManager.isBusy.not() && moveManager.isCollapsed.not()) {
+        if (moveManager.isBusy.not()) {
             changeColors(day)
             selectWeek(day)
-        } else {
-            actionQueue.add(KAction(ACTION_SELECT_DAY))
-            moveManager.expand()
         }
-        dateManager.selectDay(day)
     }
 
     private fun selectWeek(selectedDay: View?) {
@@ -153,6 +151,9 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         addView(createWeekDays())
         createWeeks(daysBefore, daysNormal, daysAfter)
         addView(dragView)
+        dragView.layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, DRAG_HEIGHT).apply {
+            gravity = Gravity.BOTTOM
+        }
     }
 
     private fun createWeeks(daysBefore: Int, daysNormal: Int, daysAfter: Int) {
@@ -214,24 +215,18 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         }
     }
 
-    override fun moveStateChanged(collapsed: Boolean) {
-        actionQueue.firstOrNull()?.let {
-            applyTransition {
-                when (it.type) {
-                    ACTION_NEXT_MONTH -> {
-                        dateManager.goNextMonth()
-                    }
-                    ACTION_PREV_MONTH -> {
-                        dateManager.goPreviousMonth()
-                    }
-                    ACTION_SELECT_DAY -> {
-                        selectDay(dateManager.getCurrentDate())
-                    }
-                }
-                actionQueue.remove(it)
-            }
-        }
-    }
+//
+//    private fun createMonthActionButton(isNext: Boolean): View? {
+//        return if (isNext) {
+//            createMonthDay(Month.TYPE_RIGHT, dateManager.getNextMonthLabel()) {
+//                dateManager.goNextMonth()
+//            }
+//        } else {
+//            createMonthDay(Month.TYPE_LEFT, dateManager.getPreviousMonthLabel()) {
+//                dateManager.goPreviousMonth()
+//            }
+//        }
+//    }
 
     private fun createMonthDay(type: Int, label: String, clickListener: (() -> Unit)? = null): View? {
         return Month(context).apply {
@@ -246,6 +241,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         totalWidth = right - left
         totalHeight = bottom - top
         dayContainerHeight = totalHeight / 10
+        weeksMarginTop = totalHeight / 40
     }
 
     private fun createWeekDays(): LinearLayout {
@@ -281,15 +277,34 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
     }
 
 
+    override fun moveStateChanged(collapsed: Boolean) {
+        actionQueue.firstOrNull()?.let {
+            applyTransition {
+                when (it.type) {
+                    ACTION_NEXT_MONTH -> {
+                        dateManager.goNextMonth()
+                    }
+                    ACTION_PREV_MONTH -> {
+                        dateManager.goPreviousMonth()
+                    }
+                    ACTION_SELECT_DAY -> {
+                        selectDay(dateManager.getCurrentDate())
+                    }
+                }
+                actionQueue.remove(it)
+            }
+        }
+    }
+
     override fun getBottomLimit() = bottom
 
     override fun getTopLimit() = getChildAt(2).bottom
 
     override fun setDragTop(newDragTop: Float) {
-        getChildAt(childCount - 1).y = newDragTop
+        dragView.y = newDragTop
     }
 
-    override fun getDragTop() = getChildAt(childCount - 1).y
+    override fun getDragTop() = dragView.y
 
     override fun getWeekHeight(position: Int) = getChildAt(position).height
 
