@@ -1,7 +1,9 @@
 package com.yalantis.kalendar
 
 import android.content.Context
+import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Paint
 import android.support.v4.content.ContextCompat
 import android.util.AttributeSet
 import android.view.Gravity
@@ -240,6 +242,16 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         }
     }
 
+
+    override fun onDraw(canvas: Canvas?) {
+        super.onDraw(canvas)
+        canvas?.drawLine(left.toFloat(), height.toFloat(), right.toFloat(), height.toFloat(), Paint().apply {
+            this.strokeWidth = 5f
+            color = Color.GREEN
+        })
+
+    }
+
     private fun calculateBounds(left: Int, top: Int, right: Int, bottom: Int) {
         totalWidth = right - left
         totalHeight = bottom - top
@@ -270,8 +282,14 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
             layoutParams = LinearLayout.LayoutParams(totalWidth / 7, dayContainerHeight)
         }
 
-    override fun setViewBottom(newBottom: Int) {
-        bottom = newBottom
+    override fun setViewHeight(newBottom: Int) {
+        layoutParams = layoutParams.apply {
+            height = newBottom
+        }
+    }
+
+    override fun viewHeight(): Int {
+        return layoutParams.height
     }
 
     override fun displayDate(emptyBefore: Int, normal: Int, emptyAfter: Int) {
@@ -280,6 +298,9 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
 
 
     override fun moveStateChanged(collapsed: Boolean) {
+        if (collapsed) {
+            //TODO disable clicks on week under drag
+        }
         actionQueue.firstOrNull()?.let {
             applyTransition {
                 when (it.type) {
@@ -298,6 +319,8 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         }
     }
 
+    override fun getViewTop() = top
+
     override fun getBottomLimit() = bottom
 
     override fun getTopLimit() = getChildAt(2).bottom
@@ -306,11 +329,23 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         dragView.y = newDragTop
     }
 
+    override fun setWeekBottom(i: Int, fl: Float) {
+
+    }
+
+    override fun setWeekHeight(i: Int, weekHeight: Int) {
+        val week = getChildAt(i)
+        week.layoutParams = week.layoutParams.apply { height = weekHeight }
+    }
+
     override fun getDragTop() = dragView.y
 
     override fun getWeekHeight(position: Int) = getChildAt(position).height
 
-    override fun getWeekBottom(position: Int) = getChildAt(position).y + getChildAt(position).height
+    override fun getWeekBottom(position: Int): Float {
+        val a = getChildAt(position)
+        return getChildAt(position).y + getChildAt(position).height
+    }
 
     override fun getWeekTop(position: Int) = getChildAt(position).y
 

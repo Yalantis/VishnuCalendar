@@ -6,6 +6,8 @@ import android.view.MotionEvent
 
 class MoveManager(private val viewProvider: ViewProvider) {
 
+    val TAG = "TAGGG"
+
     var isBusy = false
 
     var isCollapsed = false
@@ -18,6 +20,7 @@ class MoveManager(private val viewProvider: ViewProvider) {
         override fun onAnimationStart(animation: Animator?) {
             isBusy = true
         }
+
         override fun onAnimationEnd(animation: Animator?) {
             isBusy = false
             isCollapsed = isCollapsed.not()
@@ -27,7 +30,11 @@ class MoveManager(private val viewProvider: ViewProvider) {
 
     private val topLimit = viewProvider.getTopLimit()
 
+    private val viewTop = viewProvider.getViewTop()
+
     private val bottomLimit = viewProvider.getBottomLimit()
+
+    private val totalHeight = bottomLimit - viewTop
 
     private val weekHeight = viewProvider.getWeekHeight(2)
 
@@ -91,18 +98,20 @@ class MoveManager(private val viewProvider: ViewProvider) {
     private fun calculateOffsets(touchY: Float) {
         if (touchY >= topLimit) {
 
+            val newHeight = totalHeight - Math.abs(touchY - startPoint)
 
-            viewProvider.setViewBottom(touchY.toInt() + DRAG_HEIGHT)
-
+            viewProvider.setViewHeight(newHeight.toInt())
             viewProvider.setDragTop(touchY)
 
             var weekBottom: Float
             for (i in 2..6) {
                 weekBottom = viewProvider.getWeekBottom(i)
-                if (i == selectedWeek) {
 
+                if (i == selectedWeek) {
                     if (weekBottom >= touchY && touchY <= selectedWeekBottom) {
-                        viewProvider.setWeekTop(i, touchY- weekHeight)
+                        viewProvider.setWeekTop(i, touchY - weekHeight)
+                        viewProvider.setWeekHeight(i, weekHeight)
+
                     } else if (weekBottom <= touchY && touchY < selectedWeekBottom) {
                         viewProvider.setWeekTop(i, touchY - weekHeight)
                     }
@@ -112,9 +121,6 @@ class MoveManager(private val viewProvider: ViewProvider) {
                     }
                 }
             }
-        } else {
-            viewProvider.setViewBottom(topLimit + DRAG_HEIGHT)
-            viewProvider.setDragTop(topLimit.toFloat())
         }
     }
 
