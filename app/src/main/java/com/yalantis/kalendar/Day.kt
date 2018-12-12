@@ -39,7 +39,9 @@ class Day(context: Context) : TextView(context) {
     }
 
     fun size(width: Int, height: Int) {
-        layoutParams = LinearLayout.LayoutParams(width, height)
+        layoutParams = LinearLayout.LayoutParams(width, height).apply {
+            weight = 1f
+        }
     }
 
     interface OnDayClickListener {

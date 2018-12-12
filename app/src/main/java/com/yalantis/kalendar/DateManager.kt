@@ -22,5 +22,5 @@ interface DateManager {
 
     fun goPreviousMonth()
 
-    fun selectDay(day: Day)
+    fun setCurrentDate(day: Date)
 }

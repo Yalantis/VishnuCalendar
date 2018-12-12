@@ -12,7 +12,6 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.TextView
-import java.time.MonthDay
 import java.util.*
 
 const val DRAG_HEIGHT = 45
@@ -25,8 +24,6 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
     private var totalHeight: Int = 0
 
     private var dayContainerHeight = 0
-
-    private var weeksMarginTop = 0
 
     private var previousSelectedDay: View? = null
 
@@ -43,6 +40,8 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
     private fun createWeek(emptyDays: Int, emptyAtStart: Boolean): LinearLayout {
         return LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
+            isClickable = true
+            isFocusable = true
             background = ContextCompat.getDrawable(context, R.drawable.week_back)
             layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply {
                 setPadding(0, 0, 0, dp(5))
@@ -104,15 +103,19 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
             clickListener = this@Kalendar
             label = dateManager.getDayLabel()
             date = dateManager.getCurrentDate()
-            layoutParams = LinearLayout.LayoutParams(totalWidth / 7, dayContainerHeight)
+            size(totalWidth / 7, dayContainerHeight)
         }
     }
 
     override fun onDayClick(day: Day) {
-        if (moveManager.isBusy.not()) {
+        if (moveManager.isBusy.not() && moveManager.isCollapsed.not()) {
             changeColors(day)
             selectWeek(day)
+        } else {
+            actionQueue.add(KAction(ACTION_SELECT_DAY))
+            moveManager.expand()
         }
+        dateManager.setCurrentDate(day.date)
     }
 
     private fun selectWeek(selectedDay: View?) {
@@ -241,7 +244,6 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         totalWidth = right - left
         totalHeight = bottom - top
         dayContainerHeight = totalHeight / 10
-        weeksMarginTop = totalHeight / 40
     }
 
     private fun createWeekDays(): LinearLayout {
