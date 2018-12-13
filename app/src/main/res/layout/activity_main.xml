@@ -8,7 +8,9 @@
 
     <com.yalantis.kalendar.Kalendar
             android:layout_width="match_parent"
-            android:layout_height="300dp"
+            android:layout_height="400dp"
+            app:dragHeight="15dp"
+            app:dragText="Privet"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" android:id="@+id/kalendar2"/>

@@ -15,7 +15,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import java.util.*
 
-const val DRAG_HEIGHT = 45
+//const val DRAG_HEIGHT = 45
 
 class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(context, attributeSet),
     ViewProvider, Day.OnDayClickListener, DateView {
@@ -28,6 +28,10 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
 
     private var previousSelectedDay: View? = null
 
+    private var dragHeight = 0
+
+    private var dragText = ""
+
     private var isCreated = false
 
     private val moveManager by lazy { MoveManager(this) }
@@ -39,6 +43,16 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
 
     init {
         layoutTransition = LayoutTransition()
+        obtainStylable(attributeSet)
+    }
+
+    private fun obtainStylable(attributeSet: AttributeSet) {
+        val attrs = context.obtainStyledAttributes(attributeSet, R.styleable.Kalendar)
+        if (attrs.hasValue(R.styleable.Kalendar_dragHeight)) {
+            dragHeight = attrs.getDimensionPixelSize(R.styleable.Kalendar_dragHeight, 0)
+            dragText = attrs.getString(R.styleable.Kalendar_dragText) ?: ""
+        }
+        attrs.recycle()
     }
 
     private fun createWeek(emptyDays: Int, emptyAtStart: Boolean): LinearLayout {
@@ -180,10 +194,10 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
     }
 
     private fun createDragView() {
-        addView(LinearLayout(context).apply {
+        addView(TextView(context).apply {
             setBackgroundColor(Color.GRAY)
         })
-        getChildAt(childCount - 1).layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, DRAG_HEIGHT).apply {
+        getChildAt(childCount - 1).layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, dragHeight).apply {
             gravity = Gravity.BOTTOM
         }
     }
@@ -262,13 +276,15 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
             gravity = Gravity.CENTER
             textAlignment = TextView.TEXT_ALIGNMENT_GRAVITY
             setTextColor(resources.getColor(android.R.color.background_dark))
-            layoutParams = LinearLayout.LayoutParams(daySize, daySize).apply { weight = 1f }
+            layoutParams = LinearLayout.LayoutParams(daySize, daySize)
         }
 
     override fun setViewHeight(newBottom: Int) {
         layoutParams = layoutParams.apply {
             height = newBottom
         }
+        setDragTop(newBottom - dragHeight.toFloat())
+        invalidate()
     }
 
     override fun displayDate(emptyBefore: Int, normal: Int, emptyAfter: Int) {
@@ -310,13 +326,17 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
 
     override fun getViewTop() = top
 
-    override fun getBottomLimit() = bottom
+    override fun getDragHeight() = dragHeight
+
+    override fun getBottomLimit() = bottom + dragHeight
 
     override fun getTopLimit() = getChildAt(2).bottom
 
     override fun viewMinHeight() =
         getChildAt(0).height + getChildAt(1).height + getChildAt(2).height
 
+
+    override fun getWeekCount() = childCount
 
     override fun setDragTop(newDragTop: Float) {
         getChildAt(childCount - 1).y = newDragTop

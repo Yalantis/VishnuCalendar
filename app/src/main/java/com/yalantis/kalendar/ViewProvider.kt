@@ -29,4 +29,8 @@ interface ViewProvider {
     fun getViewTop(): Int
 
     fun setWeekHeight(i: Int, weekHeight: Int)
+
+    fun getDragHeight(): Int
+
+    fun getWeekCount(): Int
 }

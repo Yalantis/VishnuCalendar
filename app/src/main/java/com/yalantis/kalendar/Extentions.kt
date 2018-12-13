@@ -8,13 +8,7 @@ import android.view.ViewGroup
 import java.util.*
 import java.util.Calendar.DAY_OF_WEEK
 
-fun Int.dpToPx(resources: Resources): Int {
-    return TypedValue.applyDimension(
-        TypedValue.COMPLEX_UNIT_DIP,
-        this.toFloat(),
-        resources.displayMetrics
-    ).toInt()
-}
+const val WEEK_OFFSET = 2
 
 infix fun View.dp(value: Int): Int {
     return TypedValue.applyDimension(
