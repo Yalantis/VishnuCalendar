@@ -24,13 +24,11 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
 
     private var totalHeight: Int = 0
 
-    private var dayContainerHeight = 0
+    private var daySize = 0
 
     private var previousSelectedDay: View? = null
 
     private var isCreated = false
-
-    private val dragView by lazy { createDragView() }
 
     private val moveManager by lazy { MoveManager(this) }
 
@@ -109,7 +107,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
             clickListener = this@Kalendar
             label = dateManager.getDayLabel()
             date = dateManager.getCurrentDate()
-            size(totalWidth / 7, dayContainerHeight)
+            size(daySize, daySize)
         }
     }
 
@@ -161,10 +159,12 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         addView(createMonthSwitch())
         addView(createWeekDays())
         createWeeks(daysBefore, daysNormal, daysAfter)
-        addView(dragView)
-        dragView.layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, DRAG_HEIGHT).apply {
-            gravity = Gravity.BOTTOM
-        }
+        createDragView()
+        makeWrapContent()
+    }
+
+    private fun makeWrapContent() {
+        layoutParams = layoutParams.apply { height = WRAP_CONTENT }
     }
 
     private fun createWeeks(daysBefore: Int, daysNormal: Int, daysAfter: Int) {
@@ -179,12 +179,12 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         }
     }
 
-    private fun createDragView(): View {
-        return LinearLayout(context).apply {
-            layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, DRAG_HEIGHT).apply {
-                setGravity(Gravity.BOTTOM)
-            }
+    private fun createDragView() {
+        addView(LinearLayout(context).apply {
             setBackgroundColor(Color.GRAY)
+        })
+        getChildAt(childCount - 1).layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, DRAG_HEIGHT).apply {
+            gravity = Gravity.BOTTOM
         }
     }
 
@@ -226,19 +226,6 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         }
     }
 
-//
-//    private fun createMonthActionButton(isNext: Boolean): View? {
-//        return if (isNext) {
-//            createMonthDay(Month.TYPE_RIGHT, dateManager.getNextMonthLabel()) {
-//                dateManager.goNextMonth()
-//            }
-//        } else {
-//            createMonthDay(Month.TYPE_LEFT, dateManager.getPreviousMonthLabel()) {
-//                dateManager.goPreviousMonth()
-//            }
-//        }
-//    }
-
     private fun createMonthDay(type: Int, label: String, clickListener: (() -> Unit)? = null): View? {
         return Month(context).apply {
             this.type = type
@@ -251,7 +238,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
     private fun calculateBounds(left: Int, top: Int, right: Int, bottom: Int) {
         totalWidth = right - left
         totalHeight = bottom - top
-        dayContainerHeight = totalHeight / 10
+        daySize = totalWidth / 7
     }
 
     private fun createWeekDays(): LinearLayout {
@@ -275,7 +262,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
             gravity = Gravity.CENTER
             textAlignment = TextView.TEXT_ALIGNMENT_GRAVITY
             setTextColor(resources.getColor(android.R.color.background_dark))
-            layoutParams = LinearLayout.LayoutParams(totalWidth / 7, dayContainerHeight)
+            layoutParams = LinearLayout.LayoutParams(daySize, daySize).apply { weight = 1f }
         }
 
     override fun setViewHeight(newBottom: Int) {
@@ -284,19 +271,15 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         }
     }
 
-    override fun viewHeight(): Int {
-        return layoutParams.height
-    }
-
     override fun displayDate(emptyBefore: Int, normal: Int, emptyAfter: Int) {
         createContent(emptyBefore, normal, emptyAfter)
     }
 
 
     override fun moveStateChanged(collapsed: Boolean) {
-        if (collapsed) {
-            disableInvisibleDaysClick()
-        }
+
+        invisibleDaysClick(collapsed.not())
+
         actionQueue.firstOrNull()?.let {
             applyTransition {
                 when (it.type) {
@@ -315,13 +298,15 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         }
     }
 
-    private fun disableInvisibleDaysClick() {
+    private fun invisibleDaysClick(enabled: Boolean) {
         val week = getChildAt(3) as ViewGroup
-        week.isEnabled = false
+        week.clicks(enabled)
         for (i in 0 until 7) {
-            (week.getChildAt(i) as Day).isEnabled = false
+            (week.getChildAt(i) as Day).clicks(enabled)
         }
     }
+
+    override fun viewHeight() = layoutParams.height
 
     override fun getViewTop() = top
 
@@ -334,7 +319,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
 
 
     override fun setDragTop(newDragTop: Float) {
-        dragView.y = newDragTop
+        getChildAt(childCount - 1).y = newDragTop
     }
 
     override fun setWeekHeight(i: Int, weekHeight: Int) {
@@ -342,14 +327,11 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         week.layoutParams = week.layoutParams.apply { height = weekHeight }
     }
 
-    override fun getDragTop() = dragView.y
+    override fun getDragTop() = getChildAt(childCount - 1).y
 
     override fun getWeekHeight(position: Int) = getChildAt(position).height
 
-    override fun getWeekBottom(position: Int): Float {
-        val a = getChildAt(position)
-        return getChildAt(position).y + getChildAt(position).height
-    }
+    override fun getWeekBottom(position: Int): Float = getChildAt(position).y + getChildAt(position).height
 
     override fun getWeekTop(position: Int) = getChildAt(position).y
 

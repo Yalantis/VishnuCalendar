@@ -24,6 +24,16 @@ infix fun View.dp(value: Int): Int {
     ).toInt()
 }
 
+fun View.clicks(enabled: Boolean) {
+    if (enabled) {
+        isClickable = true
+        isFocusable = true
+    } else {
+        isClickable = false
+        isFocusable = false
+    }
+}
+
 fun ViewGroup.applyTransition(block: () -> Unit) {
     TransitionManager.beginDelayedTransition(this)
     block.invoke()
