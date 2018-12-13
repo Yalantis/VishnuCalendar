@@ -1,9 +1,8 @@
 package com.yalantis.kalendar
 
+import android.animation.LayoutTransition
 import android.content.Context
-import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.Paint
 import android.support.v4.content.ContextCompat
 import android.util.AttributeSet
 import android.view.Gravity
@@ -38,6 +37,11 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
     private val dateManager: DateManager by lazy { DateManagerImpl(this) }
 
     private val actionQueue = ArrayList<KAction>()
+
+
+    init {
+        layoutTransition = LayoutTransition()
+    }
 
     private fun createWeek(emptyDays: Int, emptyAtStart: Boolean): LinearLayout {
         return LinearLayout(context).apply {
@@ -110,14 +114,16 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
     }
 
     override fun onDayClick(day: Day) {
-        if (moveManager.isBusy.not() && moveManager.isCollapsed.not()) {
-            changeColors(day)
-            selectWeek(day)
-        } else {
-            actionQueue.add(KAction(ACTION_SELECT_DAY))
-            moveManager.expand()
+        if (previousSelectedDay != day) {
+            if (moveManager.isBusy.not() && moveManager.isCollapsed.not()) {
+                changeColors(day)
+                selectWeek(day)
+            } else {
+                actionQueue.add(KAction(ACTION_SELECT_DAY))
+                moveManager.expand()
+            }
+            dateManager.setCurrentDate(day.date)
         }
-        dateManager.setCurrentDate(day.date)
     }
 
     private fun selectWeek(selectedDay: View?) {
@@ -242,16 +248,6 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         }
     }
 
-
-    override fun onDraw(canvas: Canvas?) {
-        super.onDraw(canvas)
-        canvas?.drawLine(left.toFloat(), height.toFloat(), right.toFloat(), height.toFloat(), Paint().apply {
-            this.strokeWidth = 5f
-            color = Color.GREEN
-        })
-
-    }
-
     private fun calculateBounds(left: Int, top: Int, right: Int, bottom: Int) {
         totalWidth = right - left
         totalHeight = bottom - top
@@ -299,7 +295,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
 
     override fun moveStateChanged(collapsed: Boolean) {
         if (collapsed) {
-            //TODO disable clicks on week under drag
+            disableInvisibleDaysClick()
         }
         actionQueue.firstOrNull()?.let {
             applyTransition {
@@ -319,18 +315,26 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         }
     }
 
+    private fun disableInvisibleDaysClick() {
+        val week = getChildAt(3) as ViewGroup
+        week.isEnabled = false
+        for (i in 0 until 7) {
+            (week.getChildAt(i) as Day).isEnabled = false
+        }
+    }
+
     override fun getViewTop() = top
 
     override fun getBottomLimit() = bottom
 
     override fun getTopLimit() = getChildAt(2).bottom
 
+    override fun viewMinHeight() =
+        getChildAt(0).height + getChildAt(1).height + getChildAt(2).height
+
+
     override fun setDragTop(newDragTop: Float) {
         dragView.y = newDragTop
-    }
-
-    override fun setWeekBottom(i: Int, fl: Float) {
-
     }
 
     override fun setWeekHeight(i: Int, weekHeight: Int) {
@@ -349,8 +353,10 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
 
     override fun getWeekTop(position: Int) = getChildAt(position).y
 
-    override fun setWeekTop(position: Int, newTop: Float) {
-        getChildAt(position).y = newTop
+    override fun moveWeek(position: Int, newTop: Float) {
+        val week = getChildAt(position)
+        week.y = newTop - week.height
+        week.layoutParams = week.layoutParams.apply { height = week.height }
     }
 
 }

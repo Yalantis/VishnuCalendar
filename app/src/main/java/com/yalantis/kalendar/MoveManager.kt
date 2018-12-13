@@ -6,8 +6,6 @@ import android.view.MotionEvent
 
 class MoveManager(private val viewProvider: ViewProvider) {
 
-    val TAG = "TAGGG"
-
     var isBusy = false
 
     var isCollapsed = false
@@ -29,6 +27,8 @@ class MoveManager(private val viewProvider: ViewProvider) {
     }
 
     private val topLimit = viewProvider.getTopLimit()
+
+    private val minHeight = viewProvider.viewMinHeight()
 
     private val viewTop = viewProvider.getViewTop()
 
@@ -96,31 +96,33 @@ class MoveManager(private val viewProvider: ViewProvider) {
     }
 
     private fun calculateOffsets(touchY: Float) {
+        val newHeight = totalHeight * (touchY / totalHeight)
+
         if (touchY >= topLimit) {
 
-            val newHeight = totalHeight - Math.abs(touchY - startPoint)
+            viewProvider.setViewHeight(newHeight.toInt() + DRAG_HEIGHT)
+            viewProvider.setDragTop(touchY) //viewProvider.getBottomLimit().toFloat() - DRAG_HEIGHT
 
-            viewProvider.setViewHeight(newHeight.toInt())
-            viewProvider.setDragTop(touchY)
 
-            var weekBottom: Float
             for (i in 2..6) {
-                weekBottom = viewProvider.getWeekBottom(i)
-
                 if (i == selectedWeek) {
+                    val weekBottom = viewProvider.getWeekBottom(i)
                     if (weekBottom >= touchY && touchY <= selectedWeekBottom) {
-                        viewProvider.setWeekTop(i, touchY - weekHeight)
-                        viewProvider.setWeekHeight(i, weekHeight)
+                        viewProvider.moveWeek(i, touchY)
 
                     } else if (weekBottom <= touchY && touchY < selectedWeekBottom) {
-                        viewProvider.setWeekTop(i, touchY - weekHeight)
+                        viewProvider.moveWeek(i, touchY)
                     }
 
                     if (weekBottom != selectedWeekBottom && touchY >= selectedWeekBottom) {
-                        viewProvider.setWeekTop(i, selectedWeekBottom - weekHeight)
+                        viewProvider.moveWeek(i, selectedWeekBottom)
                     }
                 }
             }
+        } else {
+            viewProvider.moveWeek(selectedWeek, topLimit.toFloat() )
+            viewProvider.setViewHeight(minHeight + DRAG_HEIGHT)
+            viewProvider.setDragTop(minHeight.toFloat())
         }
     }
 

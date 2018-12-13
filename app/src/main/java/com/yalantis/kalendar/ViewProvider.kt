@@ -8,6 +8,8 @@ interface ViewProvider {
 
     fun getTopLimit(): Int
 
+    fun viewMinHeight(): Int
+
     fun getBottomLimit(): Int
 
     fun getDragTop(): Float
@@ -20,13 +22,11 @@ interface ViewProvider {
 
     fun getWeekTop(position: Int): Float
 
-    fun setWeekTop(position: Int, newTop: Float)
+    fun moveWeek(position: Int, newTop: Float)
 
     fun moveStateChanged(collapsed: Boolean)
 
     fun getViewTop(): Int
-
-    fun setWeekBottom(i: Int, fl: Float)
 
     fun setWeekHeight(i: Int, weekHeight: Int)
 }
