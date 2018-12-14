@@ -1,8 +1,7 @@
 package com.yalantis.kalendar
 
 import java.util.*
-import java.util.Calendar.DAY_OF_MONTH
-import java.util.Calendar.MONTH
+import java.util.Calendar.*
 
 class DateManagerImpl(private val dateView: DateView) : DateManager {
 
@@ -67,6 +66,13 @@ class DateManagerImpl(private val dateView: DateView) : DateManager {
 
     override fun setCurrentDate(day: Date) {
         calendar.time = day
+    }
+
+    override fun getWeekDayName(which: Int): String {
+        calendar.add(DAY_OF_WEEK, which)
+        val day = calendar.getDisplayName(DAY_OF_WEEK, SHORT, Locale.getDefault())
+        calendar.add(DAY_OF_WEEK, -which)
+        return day
     }
 
     override fun goNextMonth() {

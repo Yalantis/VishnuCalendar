@@ -2,14 +2,27 @@
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 
 
-    <item android:drawable="@drawable/topless_gradient"
-          android:bottom="550dp"/>
+    <item android:bottom="100dp">
+        <shape android:shape="rectangle">
+            <gradient android:startColor="@color/trans"
+                      android:centerColor="@android:color/white"
+                      android:type="linear"
+                      android:angle="-90"
+                      android:centerY="1"
+                      android:endColor="@color/trans"/>
+        </shape>
+    </item>
 
-    <item android:drawable="@android:color/white"
-          android:top="90dp"
-          android:bottom="89dp"/>
-
-    <item android:drawable="@drawable/bottomless_gradient"
-          android:top="550dp"/>
+    <item android:top="90dp"
+          android:bottom="90dp">
+        <rotate android:fromDegrees="0"
+                android:toDegrees="-90"
+                android:pivotX="50%"
+                android:pivotY="50%">
+            <shape android:shape="rectangle">
+                <solid android:color="@android:color/white"/>
+            </shape>
+        </rotate>
+    </item>
 
 </layer-list>

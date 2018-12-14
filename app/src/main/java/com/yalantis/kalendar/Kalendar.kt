@@ -48,7 +48,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         val attrs = context.obtainStyledAttributes(attributeSet, R.styleable.Kalendar)
         if (attrs.hasValue(R.styleable.Kalendar_dragHeight)) {
             dragHeight = attrs.getDimensionPixelSize(R.styleable.Kalendar_dragHeight, 0)
-            dragText = attrs.getString(R.styleable.Kalendar_dragText) ?: ""
+            dragText = attrs.getString(R.styleable.Kalendar_dragText) ?: EMPTY_STRING
         }
         attrs.recycle()
     }
@@ -168,8 +168,8 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
 
     private fun createContent(daysBefore: Int, daysNormal: Int, daysAfter: Int) {
         orientation = VERTICAL
-        addView(createMonthSwitch())
-        addView(createWeekDays())
+        createMonthSwitch()
+        createWeekDays()
         createWeeks(daysBefore, daysNormal, daysAfter)
         createDragView()
         makeWrapContent()
@@ -181,9 +181,8 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
             for (i in 0 until childCount) {
                 totHeight += getChildAt(i).height
             }
-
-            layoutParams = layoutParams.apply { height = WRAP_CONTENT }
-            moveManager.setCurrentMaxHeight(totHeight + dragHeight)
+            layoutParams = layoutParams.apply { height = WRAP_CONTENT}
+            moveManager.setCurrentMaxHeight(totHeight)
         }
     }
 
@@ -201,6 +200,8 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
 
     private fun createDragView() {
         addView(TextView(context).apply {
+            text = dragText
+            textAlignment = View.TEXT_ALIGNMENT_CENTER
             setBackgroundColor(Color.GRAY)
         })
         getChildAt(childCount - 1).layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, dragHeight).apply {
@@ -208,8 +209,8 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         }
     }
 
-    private fun createMonthSwitch(): LinearLayout {
-        return LinearLayout(context).apply {
+    private fun createMonthSwitch() {
+        addView(LinearLayout(context).apply {
             isClickable = true
             isFocusable = true
 
@@ -223,7 +224,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
             addView(createMonthDay(Month.TYPE_RIGHT, dateManager.getNextMonthLabel()) {
                 scrollMonth(true)
             })
-        }
+        })
     }
 
 
@@ -261,19 +262,19 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         daySize = totalWidth / 7
     }
 
-    private fun createWeekDays(): LinearLayout {
-        return LinearLayout(context).apply {
+    private fun createWeekDays() {
+        addView(LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             isClickable = true
             isFocusable = true
-            addView(createWeekDay("Sun"))
-            addView(createWeekDay("Mon"))
-            addView(createWeekDay("Tue"))
-            addView(createWeekDay("Wed"))
-            addView(createWeekDay("Thu"))
-            addView(createWeekDay("Fri"))
-            addView(createWeekDay("Sat"))
-        }
+            addView(createWeekDay(dateManager.getWeekDayName(0)))
+            addView(createWeekDay(dateManager.getWeekDayName(1)))
+            addView(createWeekDay(dateManager.getWeekDayName(2)))
+            addView(createWeekDay(dateManager.getWeekDayName(3)))
+            addView(createWeekDay(dateManager.getWeekDayName(4)))
+            addView(createWeekDay(dateManager.getWeekDayName(5)))
+            addView(createWeekDay(dateManager.getWeekDayName(6)))
+        })
     }
 
     private fun createWeekDay(label: String) =

@@ -23,4 +23,6 @@ interface DateManager {
     fun goPreviousMonth()
 
     fun setCurrentDate(day: Date)
+
+    fun getWeekDayName(which: Int): String
 }
