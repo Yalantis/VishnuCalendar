@@ -259,7 +259,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
             for (i in 0 until childCount) {
                 totHeight += getChildAt(i).height
             }
-            layoutParams = layoutParams.apply { height = WRAP_CONTENT }
+            layoutParams = layoutParams.apply { height = totalHeight }
             moveManager.setCurrentMaxHeight(totHeight)
         }
     }
