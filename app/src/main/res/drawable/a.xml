@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+
+    <item android:drawable="@drawable/topless_gradient"
+          android:bottom="550dp"/>
+
+    <item android:drawable="@android:color/white"
+          android:top="90dp"
+          android:bottom="89dp"/>
+
+    <item android:drawable="@drawable/bottomless_gradient"
+          android:top="550dp"/>
+
+</layer-list>

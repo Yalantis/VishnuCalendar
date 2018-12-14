@@ -6,9 +6,19 @@ import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
 import java.util.*
-import java.util.Calendar.DAY_OF_WEEK
+import java.util.Calendar.*
 
 const val WEEK_OFFSET = 2
+
+const val BLOCKING_TOUCH_WEEK = 3
+
+const val EMPTY_INT = 0
+
+const val EMPTY_STRING = ""
+
+
+val DAYS_IN_WEEK = 0 until 7
+
 
 infix fun View.dp(value: Int): Int {
     return TypedValue.applyDimension(
@@ -41,18 +51,7 @@ fun Float.dpToPx(resources: Resources): Float {
     )
 }
 
-fun Calendar.getWeekDayName(): String {
-    return when (this[DAY_OF_WEEK]) {
-        0 -> "Sun"
-        1 -> "Mon"
-        2 -> "Tue"
-        3 -> "Wed"
-        4 -> "Thu"
-        5 -> "Fri"
-        6 -> "Sat"
-        else -> ""
-    }
-}
+fun Calendar.getWeekDayName() = this.getDisplayName(DAY_OF_WEEK, SHORT, Locale.getDefault())
 
 fun Calendar.getDaysAfter() = when (this[DAY_OF_WEEK]) {
     Calendar.SATURDAY -> 0
@@ -76,53 +75,17 @@ fun Calendar.getDaysBefore() = when (this[DAY_OF_WEEK]) {
     else -> -1
 }
 
-fun Calendar.previousMonthName() =
-    when (this[Calendar.MONTH]) {
-        Calendar.JANUARY -> "December"
-        Calendar.FEBRUARY -> "January"
-        Calendar.MARCH -> "February"
-        Calendar.APRIL -> "March"
-        Calendar.MAY -> "April"
-        Calendar.JUNE -> "May"
-        Calendar.JULY -> "June"
-        Calendar.AUGUST -> "July"
-        Calendar.SEPTEMBER -> "August"
-        Calendar.OCTOBER -> "September"
-        Calendar.NOVEMBER -> "October"
-        Calendar.DECEMBER -> "November"
-        else -> ""
-    }
+fun Calendar.previousMonthName(): String {
+    this.add(Calendar.MONTH, -1)
+    val pre = this.getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.getDefault())
+    this.add(MONTH, 1)
+    return pre
+}
+fun Calendar.currentMonthName() = getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.getDefault())
 
-fun Calendar.currentMonthName() =
-    when (this[Calendar.MONTH]) {
-        Calendar.JANUARY -> "January"
-        Calendar.FEBRUARY -> "February"
-        Calendar.MARCH -> "March"
-        Calendar.APRIL -> "April"
-        Calendar.MAY -> "May"
-        Calendar.JUNE -> "June"
-        Calendar.JULY -> "July"
-        Calendar.AUGUST -> "August"
-        Calendar.SEPTEMBER -> "September"
-        Calendar.OCTOBER -> "October"
-        Calendar.NOVEMBER -> "November"
-        Calendar.DECEMBER -> "December"
-        else -> ""
-    }
-
-fun Calendar.nextMonthName() =
-    when (this[Calendar.MONTH]) {
-        Calendar.JANUARY -> "February"
-        Calendar.FEBRUARY -> "March"
-        Calendar.MARCH -> "April"
-        Calendar.APRIL -> "May"
-        Calendar.MAY -> "June"
-        Calendar.JUNE -> "July"
-        Calendar.JULY -> "August"
-        Calendar.AUGUST -> "September"
-        Calendar.SEPTEMBER -> "October"
-        Calendar.OCTOBER -> "November"
-        Calendar.NOVEMBER -> "December"
-        Calendar.DECEMBER -> "January"
-        else -> ""
-    }
+fun Calendar.nextMonthName(): String {
+    this.add(Calendar.MONTH, 1)
+    val next = this.getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.getDefault())
+    this.add(Calendar.MONTH, -1)
+    return next
+}

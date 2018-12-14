@@ -18,7 +18,7 @@ interface ViewProvider {
 
     fun getWeekBottom(position: Int): Float
 
-    fun getWeekHeight(position: Int): Int
+    fun getWeekHeight(): Int
 
     fun getWeekTop(position: Int): Float
 

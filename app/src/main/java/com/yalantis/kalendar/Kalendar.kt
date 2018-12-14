@@ -15,26 +15,24 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import java.util.*
 
-//const val DRAG_HEIGHT = 45
-
 class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(context, attributeSet),
     ViewProvider, Day.OnDayClickListener, DateView {
 
-    private var totalWidth: Int = 0
+    private var totalWidth = EMPTY_INT
 
-    private var totalHeight: Int = 0
+    private var totalHeight = EMPTY_INT
 
-    private var daySize = 0
+    private var daySize = EMPTY_INT
 
     private var previousSelectedDay: View? = null
 
-    private var dragHeight = 0
+    private var dragHeight = EMPTY_INT
 
-    private var dragText = ""
+    private var dragText = EMPTY_STRING
 
     private var isCreated = false
 
-    private val moveManager by lazy { MoveManager(this) }
+    private val moveManager: MoveManager by lazy { MoveManagerImpl(this) }
 
     private val dateManager: DateManager by lazy { DateManagerImpl(this) }
 
@@ -98,7 +96,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
     override fun selectDay(date: Date) {
         var week: ViewGroup
         var day: Day
-        for (i in 2 until childCount) {
+        for (i in WEEK_OFFSET until childCount) {
             week = getChildAt(i) as ViewGroup
             for (j in 0 until week.childCount) {
                 day = week.getChildAt(j) as Day
@@ -141,8 +139,8 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
     private fun selectWeek(selectedDay: View?) {
         selectedDay?.let {
             val parent = it.parent as View
-            val selectedWeek = indexOfChild(parent)
-            moveManager.setSelectedWeek(selectedWeek)
+            val selectedWeek = indexOfChild(parent) - WEEK_OFFSET
+            moveManager.selectWeek(selectedWeek)
         }
     }
 
@@ -178,7 +176,15 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
     }
 
     private fun makeWrapContent() {
-        layoutParams = layoutParams.apply { height = WRAP_CONTENT }
+        post {
+            var totHeight = 0
+            for (i in 0 until childCount) {
+                totHeight += getChildAt(i).height
+            }
+
+            layoutParams = layoutParams.apply { height = WRAP_CONTENT }
+            moveManager.setCurrentMaxHeight(totHeight + dragHeight)
+        }
     }
 
     private fun createWeeks(daysBefore: Int, daysNormal: Int, daysAfter: Int) {
@@ -207,7 +213,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
             isClickable = true
             isFocusable = true
 
-            setPadding(dp(8), dp(8), dp(8), dp(8))
+            setPadding(dp(8), dp(16), dp(8), dp(16))
 
             addView(createMonthDay(Month.TYPE_LEFT, dateManager.getPreviousMonthLabel()) {
                 scrollMonth(false)
@@ -315,9 +321,9 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
     }
 
     private fun invisibleDaysClick(enabled: Boolean) {
-        val week = getChildAt(3) as ViewGroup
+        val week = getChildAt(BLOCKING_TOUCH_WEEK) as ViewGroup
         week.clicks(enabled)
-        for (i in 0 until 7) {
+        for (i in DAYS_IN_WEEK) {
             (week.getChildAt(i) as Day).clicks(enabled)
         }
     }
@@ -328,15 +334,15 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
 
     override fun getDragHeight() = dragHeight
 
-    override fun getBottomLimit() = bottom + dragHeight
+    override fun getBottomLimit() = y.toInt() + height
 
-    override fun getTopLimit() = getChildAt(2).bottom
+    override fun getTopLimit() = getChildAt(WEEK_OFFSET).bottom
 
     override fun viewMinHeight() =
         getChildAt(0).height + getChildAt(1).height + getChildAt(2).height
 
 
-    override fun getWeekCount() = childCount
+    override fun getWeekCount() = childCount - WEEK_OFFSET
 
     override fun setDragTop(newDragTop: Float) {
         getChildAt(childCount - 1).y = newDragTop
@@ -349,14 +355,17 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
 
     override fun getDragTop() = getChildAt(childCount - 1).y
 
-    override fun getWeekHeight(position: Int) = getChildAt(position).height
+    override fun getWeekHeight() = getChildAt(WEEK_OFFSET).height
 
-    override fun getWeekBottom(position: Int): Float = getChildAt(position).y + getChildAt(position).height
+    override fun getWeekBottom(position: Int): Float {
+        val week = getChildAt(position + WEEK_OFFSET)
+        return week.y + week.height
+    }
 
     override fun getWeekTop(position: Int) = getChildAt(position).y
 
     override fun moveWeek(position: Int, newTop: Float) {
-        val week = getChildAt(position)
+        val week = getChildAt(position + WEEK_OFFSET)
         week.y = newTop - week.height
         week.layoutParams = week.layoutParams.apply { height = week.height }
     }
