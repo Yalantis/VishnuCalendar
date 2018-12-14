@@ -1,12 +1,12 @@
 package com.yalantis.kalendar
 
-import android.content.res.Resources
 import android.transition.TransitionManager
 import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
 import java.util.*
-import java.util.Calendar.*
+import java.util.Calendar.DAY_OF_WEEK
+import java.util.Calendar.MONTH
 
 const val WEEK_OFFSET = 2
 
@@ -42,16 +42,6 @@ fun ViewGroup.applyTransition(block: () -> Unit) {
     TransitionManager.beginDelayedTransition(this)
     block.invoke()
 }
-
-fun Float.dpToPx(resources: Resources): Float {
-    return TypedValue.applyDimension(
-        TypedValue.COMPLEX_UNIT_DIP,
-        this,
-        resources.displayMetrics
-    )
-}
-
-fun Calendar.getWeekDayName() = this.getDisplayName(DAY_OF_WEEK, SHORT, Locale.getDefault())
 
 fun Calendar.getDaysAfter() = when (this[DAY_OF_WEEK]) {
     Calendar.SATURDAY -> 0

@@ -3,6 +3,10 @@ package com.yalantis.kalendar
 import android.animation.LayoutTransition
 import android.content.Context
 import android.graphics.Color
+import android.graphics.Typeface
+import android.support.annotation.ColorInt
+import android.support.annotation.ColorRes
+import android.support.annotation.DrawableRes
 import android.support.v4.content.ContextCompat
 import android.util.AttributeSet
 import android.view.Gravity
@@ -17,6 +21,45 @@ import java.util.*
 
 class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(context, attributeSet),
     ViewProvider, Day.OnDayClickListener, DateView {
+
+    var listener: KalendarListener? = null
+
+    @DrawableRes
+    var selectedDayColor: Int = R.drawable.day_background
+        set(value) {
+            field = value
+            invalidate()
+        }
+
+    @ColorRes
+    var dragColor = android.R.color.holo_blue_dark
+        set(value) {
+            field = value
+            invalidate()
+        }
+
+    @ColorInt
+    var dragTextColor = Color.WHITE
+        set(value) {
+            field = value
+            invalidate()
+        }
+
+    var dayTypeface: Typeface = Typeface.MONOSPACE
+        set(value) {
+            field = value
+            invalidate()
+        }
+
+    var weekDayTypeface: Typeface = Typeface.MONOSPACE
+
+    var monthTypeface: Typeface = Typeface.DEFAULT_BOLD
+        set(value) {
+            field = value
+            invalidate()
+        }
+
+    private var dragTextSize: Int = 0
 
     private var totalWidth = EMPTY_INT
 
@@ -38,19 +81,43 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
 
     private val actionQueue = ArrayList<KAction>()
 
-
     init {
         layoutTransition = LayoutTransition()
         obtainStylable(attributeSet)
     }
+
 
     private fun obtainStylable(attributeSet: AttributeSet) {
         val attrs = context.obtainStyledAttributes(attributeSet, R.styleable.Kalendar)
         if (attrs.hasValue(R.styleable.Kalendar_dragHeight)) {
             dragHeight = attrs.getDimensionPixelSize(R.styleable.Kalendar_dragHeight, 0)
             dragText = attrs.getString(R.styleable.Kalendar_dragText) ?: EMPTY_STRING
+            dragTextSize = attrs.getInt(R.styleable.Kalendar_dragTextSize, 15)
         }
         attrs.recycle()
+    }
+
+    fun setDate(date: Date) {
+        dateManager.setDate(date)
+    }
+
+    fun scrollMonth(forward: Boolean = true) {
+        if (moveManager.isCollapsed) {
+            if (forward) {
+                actionQueue.add(KAction((ACTION_NEXT_MONTH)))
+            } else {
+                actionQueue.add(KAction((ACTION_PREV_MONTH)))
+            }
+            moveManager.expand()
+        } else {
+            applyTransition {
+                if (forward) {
+                    dateManager.goNextMonth()
+                } else {
+                    dateManager.goPreviousMonth()
+                }
+            }
+        }
     }
 
     private fun createWeek(emptyDays: Int, emptyAtStart: Boolean): LinearLayout {
@@ -88,11 +155,6 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         }
     }
 
-    fun setDate(date: Date) {
-        dateManager.setDate(date)
-    }
-
-
     override fun selectDay(date: Date) {
         var week: ViewGroup
         var day: Day
@@ -110,6 +172,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
 
     private fun createDay(isEmpty: Boolean): TextView {
         return Day(context).apply {
+            typeface = dayTypeface
             labelColor = if (isEmpty) {
                 resources.getColor(android.R.color.darker_gray)
             } else {
@@ -134,6 +197,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
             }
             dateManager.setCurrentDate(day.date)
         }
+        listener?.onDayClick(day.date)
     }
 
     private fun selectWeek(selectedDay: View?) {
@@ -145,7 +209,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
     }
 
     private fun changeColors(newSelectedDay: View?) {
-        newSelectedDay?.setBackgroundResource(R.drawable.day_background)
+        newSelectedDay?.setBackgroundResource(selectedDayColor)
         previousSelectedDay?.background = null
         previousSelectedDay = newSelectedDay
     }
@@ -181,7 +245,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
             for (i in 0 until childCount) {
                 totHeight += getChildAt(i).height
             }
-            layoutParams = layoutParams.apply { height = WRAP_CONTENT}
+            layoutParams = layoutParams.apply { height = WRAP_CONTENT }
             moveManager.setCurrentMaxHeight(totHeight)
         }
     }
@@ -201,8 +265,10 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
     private fun createDragView() {
         addView(TextView(context).apply {
             text = dragText
+            textSize = dragTextSize.toFloat()
+            setTextColor(dragTextColor)
             textAlignment = View.TEXT_ALIGNMENT_CENTER
-            setBackgroundColor(Color.GRAY)
+            setBackgroundResource(dragColor)
         })
         getChildAt(childCount - 1).layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, dragHeight).apply {
             gravity = Gravity.BOTTOM
@@ -227,30 +293,11 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         })
     }
 
-
-    fun scrollMonth(forward: Boolean = true) {
-        if (moveManager.isCollapsed) {
-            if (forward) {
-                actionQueue.add(KAction((ACTION_NEXT_MONTH)))
-            } else {
-                actionQueue.add(KAction((ACTION_PREV_MONTH)))
-            }
-            moveManager.expand()
-        } else {
-            applyTransition {
-                if (forward) {
-                    dateManager.goNextMonth()
-                } else {
-                    dateManager.goPreviousMonth()
-                }
-            }
-        }
-    }
-
     private fun createMonthDay(type: Int, label: String, clickListener: (() -> Unit)? = null): View? {
         return Month(context).apply {
             this.type = type
             this.label = label
+            typeface = monthTypeface
             textSize = 18f
             click = clickListener
         }
@@ -280,6 +327,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
     private fun createWeekDay(label: String) =
         TextView(context).apply {
             text = label
+            typeface = weekDayTypeface
             gravity = Gravity.CENTER
             textAlignment = TextView.TEXT_ALIGNMENT_GRAVITY
             setTextColor(resources.getColor(android.R.color.background_dark))
@@ -319,6 +367,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
                 actionQueue.remove(it)
             }
         }
+        listener?.onStateChanged(collapsed)
     }
 
     private fun invisibleDaysClick(enabled: Boolean) {
@@ -369,6 +418,11 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         val week = getChildAt(position + WEEK_OFFSET)
         week.y = newTop - week.height
         week.layoutParams = week.layoutParams.apply { height = week.height }
+    }
+
+    interface KalendarListener {
+        fun onDayClick(date: Date)
+        fun onStateChanged(isCollapsed: Boolean)
     }
 
 }
