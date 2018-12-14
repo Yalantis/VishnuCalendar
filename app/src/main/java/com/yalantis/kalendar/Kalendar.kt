@@ -59,7 +59,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
             invalidate()
         }
 
-    private var dragTextSize: Int = 0
+    private var dragTextSize = EMPTY_INT
 
     private var totalWidth = EMPTY_INT
 

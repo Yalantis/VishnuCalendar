@@ -23,6 +23,7 @@ class MoveManagerImpl(private val viewProvider: ViewProvider) : MoveManager {
             isBusy = false
             isCollapsed = isCollapsed.not()
             viewProvider.moveStateChanged(isCollapsed)
+            animation?.removeAllListeners()
         }
     }
 
