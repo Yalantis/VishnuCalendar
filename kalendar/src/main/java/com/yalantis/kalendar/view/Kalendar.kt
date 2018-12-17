@@ -105,7 +105,6 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         obtainStylable(attributeSet)
     }
 
-
     private fun obtainStylable(attributeSet: AttributeSet) {
         val attrs = context.obtainStyledAttributes(attributeSet, R.styleable.Kalendar)
         if (attrs.hasValue(R.styleable.Kalendar_dragHeight)) {
