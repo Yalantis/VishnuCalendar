@@ -33,6 +33,28 @@ import java.util.*
 class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(context, attributeSet),
     ViewProvider, Day.OnDayClickListener, DateView {
 
+    private var dragTextSize = EMPTY_INT
+
+    private var totalWidth = EMPTY_INT
+
+    private var totalHeight = EMPTY_INT
+
+    private var daySize = EMPTY_INT
+
+    private var previousSelectedDay: View? = null
+
+    private var dragHeight = EMPTY_INT
+
+    private var dragText = EMPTY_STRING
+
+    private var isCreated = false
+
+    private val moveManager: MoveManager by lazy { MoveManagerImpl(this) }
+
+    private val dateManager: DateManager by lazy { DateManagerImpl(this) }
+
+    private val actionQueue = ArrayList<KAction>()
+
     var listener: KalendarListener? = null
 
     @DrawableRes
@@ -70,27 +92,6 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
             invalidate()
         }
 
-    private var dragTextSize = EMPTY_INT
-
-    private var totalWidth = EMPTY_INT
-
-    private var totalHeight = EMPTY_INT
-
-    private var daySize = EMPTY_INT
-
-    private var previousSelectedDay: View? = null
-
-    private var dragHeight = EMPTY_INT
-
-    private var dragText = EMPTY_STRING
-
-    private var isCreated = false
-
-    private val moveManager: MoveManager by lazy { MoveManagerImpl(this) }
-
-    private val dateManager: DateManager by lazy { DateManagerImpl(this) }
-
-    private val actionQueue = ArrayList<KAction>()
 
     init {
         layoutTransition = LayoutTransition()
@@ -101,7 +102,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
     private fun obtainStylable(attributeSet: AttributeSet) {
         val attrs = context.obtainStyledAttributes(attributeSet, R.styleable.Kalendar)
         if (attrs.hasValue(R.styleable.Kalendar_dragHeight)) {
-            dragHeight = attrs.getDimensionPixelSize(R.styleable.Kalendar_dragHeight, 0)
+            dragHeight = attrs.getDimensionPixelSize(R.styleable.Kalendar_dragHeight, 15)
             dragText = attrs.getString(R.styleable.Kalendar_dragText) ?:
                     EMPTY_STRING
             dragTextSize = attrs.getInt(R.styleable.Kalendar_dragTextSize, 15)
@@ -139,7 +140,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
             orientation = LinearLayout.HORIZONTAL
             isClickable = true
             isFocusable = true
-            background = ContextCompat.getDrawable(context, R.drawable.week_back)
+            background = ContextCompat.getDrawable(context, R.drawable.unselected_week)
             layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply {
                 setPadding(0, 0, 0, dp(5))
             }
@@ -217,6 +218,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
     private fun selectWeek(selectedDay: View?) {
         selectedDay?.let {
             val parent = it.parent as View
+            parent.setBackgroundResource(R.drawable.selected_week_back)
             val selectedWeek = indexOfChild(parent) - WEEK_OFFSET
             moveManager.selectWeek(selectedWeek)
         }
@@ -259,7 +261,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
             for (i in 0 until childCount) {
                 totHeight += getChildAt(i).height
             }
-            layoutParams = layoutParams.apply { height = totalHeight }
+            this.layoutParams = this.layoutParams.apply { height = WRAP_CONTENT }
             moveManager.setCurrentMaxHeight(totHeight)
         }
     }
@@ -283,6 +285,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
             setTextColor(dragTextColor)
             textAlignment = View.TEXT_ALIGNMENT_CENTER
             setBackgroundResource(dragColor)
+            this.layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, dragHeight)
         })
         getChildAt(childCount - 1).layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, dragHeight).apply {
             gravity = Gravity.BOTTOM
@@ -392,6 +395,10 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         }
     }
 
+    override fun applyAlpha(week: Int, alpha: Float) {
+        getChildAt(week + WEEK_OFFSET).alpha = alpha
+    }
+
     override fun viewHeight() = layoutParams.height
 
     override fun getViewTop() = top
@@ -406,7 +413,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         getChildAt(0).height + getChildAt(1).height + getChildAt(2).height
 
 
-    override fun getWeekCount() = childCount - WEEK_OFFSET
+    override fun getWeekCount() = childCount - WEEK_OFFSET - 1 // -1 cuz dragView
 
     override fun setDragTop(newDragTop: Float) {
         getChildAt(childCount - 1).y = newDragTop

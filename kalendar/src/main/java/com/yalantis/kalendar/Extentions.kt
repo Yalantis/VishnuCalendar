@@ -16,6 +16,9 @@ const val EMPTY_INT = 0
 
 const val EMPTY_STRING = ""
 
+const val DEFAULT_DRAG_HEIGHT = 20
+
+const val DEFAULT_DRAG_TEXT_SIZE = 15
 
 val DAYS_IN_WEEK = 0 until 7
 

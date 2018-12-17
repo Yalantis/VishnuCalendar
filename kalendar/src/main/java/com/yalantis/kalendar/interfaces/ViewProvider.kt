@@ -33,4 +33,6 @@ interface ViewProvider {
     fun getDragHeight(): Int
 
     fun getWeekCount(): Int
+
+    fun applyAlpha(week: Int, alpha: Float)
 }

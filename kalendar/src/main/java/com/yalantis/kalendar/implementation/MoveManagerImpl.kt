@@ -3,12 +3,12 @@ package com.yalantis.kalendar.implementation
 import android.animation.Animator
 import android.animation.ValueAnimator
 import android.view.MotionEvent
+import android.view.animation.DecelerateInterpolator
 import com.yalantis.kalendar.EMPTY_INT
 import com.yalantis.kalendar.interfaces.MoveManager
 import com.yalantis.kalendar.interfaces.ViewProvider
 
-class MoveManagerImpl(private val viewProvider: ViewProvider) :
-    MoveManager {
+class MoveManagerImpl(private val viewProvider: ViewProvider) : MoveManager {
 
     override var isBusy = false
 
@@ -49,7 +49,7 @@ class MoveManagerImpl(private val viewProvider: ViewProvider) :
 
     private var selectedWeek = EMPTY_INT
 
-    private var selectedWeekBottom = viewProvider.getWeekBottom(selectedWeek)
+    private val defaultPositions = ArrayList<Float>()
 
     override fun onTouch(event: MotionEvent): Boolean {
         return when (event.action) {
@@ -91,7 +91,8 @@ class MoveManagerImpl(private val viewProvider: ViewProvider) :
     override fun expand() {
         val anim = ValueAnimator
             .ofFloat(viewProvider.getDragTop(), bottomLimit + dragHeight.toFloat())
-            .setDuration(300)
+            .setDuration(500)
+        anim.interpolator = DecelerateInterpolator()
         anim.addUpdateListener {
             calculateOffsets(it.animatedValue as Float)
         }
@@ -101,7 +102,8 @@ class MoveManagerImpl(private val viewProvider: ViewProvider) :
 
     override fun collapse() {
         val anim = ValueAnimator.ofFloat(viewProvider.getDragTop(), topLimit.toFloat())
-            .setDuration(300)
+            .setDuration(500)
+        anim.interpolator = DecelerateInterpolator()
         anim.addUpdateListener {
             calculateOffsets(it.animatedValue as Float)
         }
@@ -117,27 +119,63 @@ class MoveManagerImpl(private val viewProvider: ViewProvider) :
             viewProvider.setViewHeight(newHeight.toInt())
             viewProvider.setDragTop(touchY)
 
+            var weekBottom: Float
 
-            for (i in 0..weekCount) {
-                if (i == selectedWeek) {
-                    val weekBottom = viewProvider.getWeekBottom(i)
-
-                    if (weekBottom > touchY) {
-                        viewProvider.moveWeek(i, touchY)
-
-                    } else if (weekBottom <= touchY && touchY < selectedWeekBottom) {
-                        viewProvider.moveWeek(i, touchY)
-                    }
-
-                    if (weekBottom != selectedWeekBottom && touchY >= selectedWeekBottom) {
-                        viewProvider.moveWeek(i, selectedWeekBottom)
-                    }
-                }
+            for (week in 0 until weekCount) {
+                weekBottom = viewProvider.getWeekBottom(week)
+                moveWeek(week, weekBottom, touchY, defaultPositions[week])
+                checkForDefaultPlace(touchY)
             }
+
         } else {
-            viewProvider.moveWeek(selectedWeek, topLimit.toFloat() )
+            viewProvider.moveWeek(selectedWeek, topLimit.toFloat())
             viewProvider.setViewHeight(minHeight + dragHeight)
             viewProvider.setDragTop(minHeight.toFloat())
+            checkForDefaultPlace(touchY)
+        }
+    }
+
+    private fun applyAlpha(week: Int, touchY: Float, defaultBottom: Float) {
+        if (week != selectedWeek) {
+            val alpha = (1 - (Math.abs(defaultBottom - touchY) / weekHeight))
+            if (alpha in 0f..1f) {
+                when (alpha) {
+                    in 0f..0.3f -> viewProvider.applyAlpha(week, 0f)
+                    in 0.7f..1f -> viewProvider.applyAlpha(week, 1f)
+                    else -> viewProvider.applyAlpha(week, alpha)
+                }
+            }
+        }
+    }
+
+    private fun checkForDefaultPlace(touchY: Float) {
+        var defaultBottom: Float
+        var currentBottom: Float
+
+        for (week in 0 until weekCount) {
+            currentBottom = viewProvider.getWeekBottom(week)
+            defaultBottom = defaultPositions[week]
+            if (touchY < defaultBottom - weekHeight && week != selectedWeek) {
+                viewProvider.applyAlpha(week, 0f)
+            } else if (touchY > defaultBottom && currentBottom != defaultBottom) {
+                moveWeek(week, currentBottom, touchY, defaultPositions[week])
+            }
+        }
+    }
+
+    private fun moveWeek(which: Int, weekBottom: Float, touchY: Float, defaultPosition: Float) {
+        when {
+            weekBottom != defaultPosition && touchY > defaultPosition -> {
+                viewProvider.moveWeek(which, defaultPosition)
+            }
+            weekBottom > touchY -> {
+                viewProvider.moveWeek(which, touchY)
+                applyAlpha(which, touchY, defaultPosition)
+            }
+            weekBottom <= touchY && touchY < defaultPosition -> {
+                viewProvider.moveWeek(which, touchY)
+                applyAlpha(which, touchY, defaultPosition)
+            }
         }
     }
 
@@ -145,6 +183,14 @@ class MoveManagerImpl(private val viewProvider: ViewProvider) :
 
     override fun selectWeek(selectedWeek: Int) {
         this.selectedWeek = selectedWeek
-        selectedWeekBottom = viewProvider.getWeekBottom(selectedWeek)
+        this.weekCount = viewProvider.getWeekCount()
+        refreshDefaultPositions()
+    }
+
+    private fun refreshDefaultPositions() {
+        //weeks 0-5 (if displayed 6)
+        for (i in 0 until weekCount) {
+            defaultPositions.add(viewProvider.getWeekBottom(i))
+        }
     }
 }
