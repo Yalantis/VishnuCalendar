@@ -64,6 +64,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
             invalidate()
         }
 
+
     @ColorRes
     var dragColor = android.R.color.holo_blue_dark
         set(value) {
@@ -92,6 +93,12 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
             invalidate()
         }
 
+    var kalendarBackground: Int = android.R.color.white
+        set(value) {
+            field = value
+            setBackgroundResource(value)
+            invalidate()
+        }
 
     init {
         layoutTransition = LayoutTransition()
@@ -103,8 +110,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         val attrs = context.obtainStyledAttributes(attributeSet, R.styleable.Kalendar)
         if (attrs.hasValue(R.styleable.Kalendar_dragHeight)) {
             dragHeight = attrs.getDimensionPixelSize(R.styleable.Kalendar_dragHeight, 15)
-            dragText = attrs.getString(R.styleable.Kalendar_dragText) ?:
-                    EMPTY_STRING
+            dragText = attrs.getString(R.styleable.Kalendar_dragText) ?: EMPTY_STRING
             dragTextSize = attrs.getInt(R.styleable.Kalendar_dragTextSize, 15)
         }
         attrs.recycle()
