@@ -10,9 +10,15 @@ import java.util.Calendar.MONTH
 
 const val WEEK_OFFSET = 2
 
+const val DAYS_IN_WEEK = 7
+
+const val DEFAULT_DAY_TEXT_SIZE = 18f
+
 const val BLOCKING_TOUCH_WEEK = 3
 
 const val EMPTY_INT = 0
+
+const val EMPTY_FLOAT = 0f
 
 const val EMPTY_STRING = ""
 
@@ -20,7 +26,9 @@ const val DEFAULT_DRAG_HEIGHT = 20
 
 const val DEFAULT_DRAG_TEXT_SIZE = 15
 
-val DAYS_IN_WEEK = 0 until 7
+const val KALENDAR_SPEED = 500L
+
+val DAYS_IN_WEEK_RANGE = 0 until 7
 
 
 infix fun View.dp(value: Int): Int {
@@ -74,6 +82,7 @@ fun Calendar.previousMonthName(): String {
     this.add(MONTH, 1)
     return pre
 }
+
 fun Calendar.currentMonthName() = getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.getDefault())
 
 fun Calendar.nextMonthName(): String {

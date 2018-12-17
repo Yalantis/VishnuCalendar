@@ -4,7 +4,9 @@ import android.animation.Animator
 import android.animation.ValueAnimator
 import android.view.MotionEvent
 import android.view.animation.DecelerateInterpolator
+import com.yalantis.kalendar.EMPTY_FLOAT
 import com.yalantis.kalendar.EMPTY_INT
+import com.yalantis.kalendar.KALENDAR_SPEED
 import com.yalantis.kalendar.interfaces.MoveManager
 import com.yalantis.kalendar.interfaces.ViewProvider
 
@@ -14,9 +16,9 @@ class MoveManagerImpl(private val viewProvider: ViewProvider) : MoveManager {
 
     override var isCollapsed = false
 
-    private var startPoint = 0f
+    private var startPoint = EMPTY_FLOAT
 
-    private val busyListener = object : Animator.AnimatorListener {
+    private val finishListener = object : Animator.AnimatorListener {
         override fun onAnimationRepeat(animation: Animator?) {}
         override fun onAnimationCancel(animation: Animator?) {}
         override fun onAnimationStart(animation: Animator?) {
@@ -91,23 +93,23 @@ class MoveManagerImpl(private val viewProvider: ViewProvider) : MoveManager {
     override fun expand() {
         val anim = ValueAnimator
             .ofFloat(viewProvider.getDragTop(), bottomLimit + dragHeight.toFloat())
-            .setDuration(500)
+            .setDuration(KALENDAR_SPEED)
         anim.interpolator = DecelerateInterpolator()
         anim.addUpdateListener {
             calculateOffsets(it.animatedValue as Float)
         }
-        anim.addListener(busyListener)
+        anim.addListener(finishListener)
         anim.start()
     }
 
     override fun collapse() {
         val anim = ValueAnimator.ofFloat(viewProvider.getDragTop(), topLimit.toFloat())
-            .setDuration(500)
+            .setDuration(KALENDAR_SPEED)
         anim.interpolator = DecelerateInterpolator()
         anim.addUpdateListener {
             calculateOffsets(it.animatedValue as Float)
         }
-        anim.addListener(busyListener)
+        anim.addListener(finishListener)
         anim.start()
     }
 
@@ -139,11 +141,7 @@ class MoveManagerImpl(private val viewProvider: ViewProvider) : MoveManager {
         if (week != selectedWeek) {
             val alpha = (1 - (Math.abs(defaultBottom - touchY) / weekHeight))
             if (alpha in 0f..1f) {
-                when (alpha) {
-                    in 0f..0.3f -> viewProvider.applyAlpha(week, 0f)
-                    in 0.7f..1f -> viewProvider.applyAlpha(week, 1f)
-                    else -> viewProvider.applyAlpha(week, alpha)
-                }
+                viewProvider.applyAlpha(week, alpha)
             }
         }
     }

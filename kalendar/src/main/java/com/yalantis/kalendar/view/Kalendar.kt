@@ -108,9 +108,9 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
     private fun obtainStylable(attributeSet: AttributeSet) {
         val attrs = context.obtainStyledAttributes(attributeSet, R.styleable.Kalendar)
         if (attrs.hasValue(R.styleable.Kalendar_dragHeight)) {
-            dragHeight = attrs.getDimensionPixelSize(R.styleable.Kalendar_dragHeight, 15)
+            dragHeight = attrs.getDimensionPixelSize(R.styleable.Kalendar_dragHeight, DEFAULT_DRAG_HEIGHT)
             dragText = attrs.getString(R.styleable.Kalendar_dragText) ?: EMPTY_STRING
-            dragTextSize = attrs.getInt(R.styleable.Kalendar_dragTextSize, 15)
+            dragTextSize = attrs.getInt(R.styleable.Kalendar_dragTextSize, DEFAULT_DRAG_TEXT_SIZE)
         }
         attrs.recycle()
     }
@@ -159,12 +159,12 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
                 week.addView(createDay(true))
                 dateManager.addDay()
             }
-            for (i in 1..7 - emptyDays) {
+            for (i in 1..DAYS_IN_WEEK - emptyDays) {
                 week.addView(createDay(false))
                 dateManager.addDay()
             }
         } else {
-            for (i in 1..7 - emptyDays) {
+            for (i in 1..DAYS_IN_WEEK - emptyDays) {
                 week.addView(createDay(false))
                 dateManager.addDay()
             }
@@ -194,9 +194,9 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         return Day(context).apply {
             typeface = dayTypeface
             labelColor = if (isEmpty) {
-                resources.getColor(android.R.color.darker_gray)
+                ContextCompat.getColor(context, android.R.color.darker_gray)
             } else {
-                resources.getColor(android.R.color.background_dark)
+                ContextCompat.getColor(context, android.R.color.background_dark)
             }
             canClick = isEmpty.not()
             clickListener = this@Kalendar
@@ -273,7 +273,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
 
     private fun createWeeks(daysBefore: Int, daysNormal: Int, daysAfter: Int) {
         val totalDays = daysBefore + daysAfter + daysNormal
-        val weeksAmount = totalDays / 7
+        val weeksAmount = totalDays / DAYS_IN_WEEK
         for (i in 1..weeksAmount) {
             when (i) {
                 1 -> addView(createWeek(daysBefore, true))
@@ -320,7 +320,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
             this.type = type
             this.label = label
             typeface = monthTypeface
-            textSize = 18f
+            textSize = DEFAULT_DAY_TEXT_SIZE
             click = clickListener
         }
     }
@@ -328,7 +328,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
     private fun calculateBounds(left: Int, top: Int, right: Int, bottom: Int) {
         totalWidth = right - left
         totalHeight = bottom - top
-        daySize = totalWidth / 7
+        daySize = totalWidth / DAYS_IN_WEEK
     }
 
     private fun createWeekDays() {
@@ -336,13 +336,9 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
             orientation = LinearLayout.HORIZONTAL
             isClickable = true
             isFocusable = true
-            addView(createWeekDay(dateManager.getWeekDayName(0)))
-            addView(createWeekDay(dateManager.getWeekDayName(1)))
-            addView(createWeekDay(dateManager.getWeekDayName(2)))
-            addView(createWeekDay(dateManager.getWeekDayName(3)))
-            addView(createWeekDay(dateManager.getWeekDayName(4)))
-            addView(createWeekDay(dateManager.getWeekDayName(5)))
-            addView(createWeekDay(dateManager.getWeekDayName(6)))
+            for (i in 0 until 7) {
+                addView(createWeekDay(dateManager.getWeekDayName(i)))
+            }
         })
     }
 
@@ -395,7 +391,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
     private fun invisibleDaysClick(enabled: Boolean) {
         val week = getChildAt(BLOCKING_TOUCH_WEEK) as ViewGroup
         week.clicks(enabled)
-        for (i in DAYS_IN_WEEK) {
+        for (i in DAYS_IN_WEEK_RANGE) {
             (week.getChildAt(i) as Day).clicks(enabled)
         }
     }

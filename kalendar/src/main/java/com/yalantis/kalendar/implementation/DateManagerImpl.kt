@@ -6,8 +6,7 @@ import com.yalantis.kalendar.interfaces.DateView
 import java.util.*
 import java.util.Calendar.*
 
-class DateManagerImpl(private val dateView: DateView) :
-    DateManager {
+class DateManagerImpl(private val dateView: DateView) : DateManager {
 
     private val calendar = Calendar.getInstance()
 

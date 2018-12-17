@@ -19,10 +19,9 @@ class Day(context: Context) : TextView(context) {
     var canClick = false
         set(value) {
             field = value
-            if (value)
-                setOnClickListener {
-                    clickListener?.onDayClick(it as Day)
-                }
+            setOnClickListener {
+                clickListener?.onDayClick(it as Day)
+            }
         }
 
     var labelColor = 0
