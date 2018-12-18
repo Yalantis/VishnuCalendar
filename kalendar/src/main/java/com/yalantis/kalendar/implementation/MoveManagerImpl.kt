@@ -62,6 +62,7 @@ class MoveManagerImpl(private val viewProvider: ViewProvider) : MoveManager {
                 } else {
                     expand()
                 }
+                checkForDefaultPositions(event.y)
                 true
             }
 
@@ -121,19 +122,16 @@ class MoveManagerImpl(private val viewProvider: ViewProvider) : MoveManager {
             viewProvider.setViewHeight(newHeight.toInt())
             viewProvider.setDragTop(touchY)
 
-            var weekBottom: Float
-
             for (week in 0 until weekCount) {
-                weekBottom = viewProvider.getWeekBottom(week)
-                moveWeek(week, weekBottom, touchY, defaultPositions[week])
-                checkForDefaultPlace(touchY)
+                moveWeek(week, viewProvider.getWeekBottom(week), touchY, defaultPositions[week])
+                checkForDefaultPositions(touchY)
             }
 
         } else {
             viewProvider.moveWeek(selectedWeek, topLimit.toFloat())
             viewProvider.setViewHeight(minHeight + dragHeight)
             viewProvider.setDragTop(minHeight.toFloat())
-            checkForDefaultPlace(touchY)
+            checkForDefaultPositions(touchY)
         }
     }
 
@@ -146,7 +144,7 @@ class MoveManagerImpl(private val viewProvider: ViewProvider) : MoveManager {
         }
     }
 
-    private fun checkForDefaultPlace(touchY: Float) {
+    private fun checkForDefaultPositions(touchY: Float) {
         var defaultBottom: Float
         var currentBottom: Float
 
@@ -156,7 +154,8 @@ class MoveManagerImpl(private val viewProvider: ViewProvider) : MoveManager {
             if (touchY < defaultBottom - weekHeight && week != selectedWeek) {
                 viewProvider.applyAlpha(week, 0f)
             } else if (touchY > defaultBottom && currentBottom != defaultBottom) {
-                moveWeek(week, currentBottom, touchY, defaultPositions[week])
+                viewProvider.moveWeek(week, defaultBottom)
+                viewProvider.applyAlpha(week, 1f)
             }
         }
     }
