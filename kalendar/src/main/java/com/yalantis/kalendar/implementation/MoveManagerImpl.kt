@@ -62,7 +62,6 @@ class MoveManagerImpl(private val viewProvider: ViewProvider) : MoveManager {
                 } else {
                     expand()
                 }
-                checkForDefaultPositions(event.y)
                 true
             }
 
@@ -137,7 +136,7 @@ class MoveManagerImpl(private val viewProvider: ViewProvider) : MoveManager {
 
     private fun applyAlpha(week: Int, touchY: Float, defaultBottom: Float) {
         if (week != selectedWeek) {
-            val alpha = (1 - (Math.abs(defaultBottom - touchY) / weekHeight))
+            val alpha = (1 - (Math.abs(defaultBottom - touchY) / (weekHeight / 2.5f)))
             if (alpha in 0f..1f) {
                 viewProvider.applyAlpha(week, alpha)
             }
