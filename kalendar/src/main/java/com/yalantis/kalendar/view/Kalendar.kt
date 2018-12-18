@@ -209,8 +209,12 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
     override fun onDayClick(day: Day) {
         if (previousSelectedDay != day) {
             if (moveManager.isBusy.not() && moveManager.isCollapsed.not()) {
-                changeColors(day)
-                selectWeek(day)
+                if (day.canClick.not()) {
+                    selectDayAndSwitchMonth(day)
+                } else {
+                    changeColors(day)
+                    selectWeek(day)
+                }
             } else {
                 actionQueue.add(KAction(ACTION_SELECT_DAY))
                 moveManager.expand()
@@ -218,6 +222,16 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
             dateManager.setCurrentDate(day.date)
         }
         listener?.onDayClick(day.date)
+    }
+
+    private fun selectDayAndSwitchMonth(day: Day) {
+        if (day.date.time > dateManager.getCurrentDate().time) {
+            dateManager.goNextMonth()
+        } else {
+            dateManager.goPreviousMonth()
+        }
+        dateManager.setCurrentDate(day.date)
+        selectDay(day.date)
     }
 
     private fun selectWeek(selectedDay: View?) {
