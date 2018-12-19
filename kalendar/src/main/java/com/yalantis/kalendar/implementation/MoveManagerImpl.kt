@@ -4,15 +4,13 @@ import android.animation.Animator
 import android.animation.ValueAnimator
 import android.view.MotionEvent
 import android.view.animation.DecelerateInterpolator
-import com.yalantis.kalendar.EMPTY_FLOAT
-import com.yalantis.kalendar.EMPTY_INT
-import com.yalantis.kalendar.KALENDAR_SPEED
+import com.yalantis.kalendar.*
 import com.yalantis.kalendar.interfaces.MoveManager
 import com.yalantis.kalendar.interfaces.ViewProvider
 
 class MoveManagerImpl(private val viewProvider: ViewProvider) : MoveManager {
 
-    override var isBusy = false
+    override var isInAction = false
 
     override var isCollapsed = false
 
@@ -22,11 +20,11 @@ class MoveManagerImpl(private val viewProvider: ViewProvider) : MoveManager {
         override fun onAnimationRepeat(animation: Animator?) {}
         override fun onAnimationCancel(animation: Animator?) {}
         override fun onAnimationStart(animation: Animator?) {
-            isBusy = true
+            isInAction = true
         }
 
         override fun onAnimationEnd(animation: Animator?) {
-            isBusy = false
+            isInAction = false
             isCollapsed = isCollapsed.not()
             viewProvider.moveStateChanged(isCollapsed)
             animation?.removeAllListeners()
@@ -66,7 +64,7 @@ class MoveManagerImpl(private val viewProvider: ViewProvider) : MoveManager {
             }
 
             MotionEvent.ACTION_CANCEL -> {
-                isBusy = false
+                isInAction = false
                 true
             }
 
@@ -76,7 +74,7 @@ class MoveManagerImpl(private val viewProvider: ViewProvider) : MoveManager {
             }
 
             MotionEvent.ACTION_DOWN -> {
-                isBusy = true
+                isInAction = true
                 startPoint = event.y
                 weekCount = viewProvider.getWeekCount()
                 return true
@@ -113,54 +111,103 @@ class MoveManagerImpl(private val viewProvider: ViewProvider) : MoveManager {
         anim.start()
     }
 
+    /**
+     *  Method calculate offsets for every view on each touch position
+     */
+
     private fun calculateOffsets(touchY: Float) {
         val newHeight = (totalHeight * (touchY / totalHeight)) + dragHeight
 
-        if (touchY >= topLimit) {
+        if (touchY > topLimit) {
 
             viewProvider.setViewHeight(newHeight.toInt())
             viewProvider.setDragTop(touchY)
 
             for (week in 0 until weekCount) {
-                moveWeek(week, viewProvider.getWeekBottom(week), touchY, defaultPositions[week])
-                checkForDefaultPositions(touchY)
+                if (week < selectedWeek) {
+                    moveWeek(week, viewProvider.getWeekBottom(week), touchY - weekHeight, defaultPositions[week])
+                } else {
+                    moveWeek(week, viewProvider.getWeekBottom(week), touchY, defaultPositions[week])
+                }
             }
-
+            controlAboveSelected(touchY)
+            controlBelowSelected(touchY)
         } else {
             viewProvider.moveWeek(selectedWeek, topLimit.toFloat())
             viewProvider.setViewHeight(minHeight + dragHeight)
             viewProvider.setDragTop(minHeight.toFloat())
-            checkForDefaultPositions(touchY)
+            controlAboveSelected(touchY, overScroll = true)
+            controlBelowSelected(touchY)
         }
     }
 
+    /**
+     *  Method calculate current alpha depends on offset from default week bottom
+     */
+
     private fun applyAlpha(week: Int, touchY: Float, defaultBottom: Float) {
         if (week != selectedWeek) {
-            val alpha = (1 - (Math.abs(defaultBottom - touchY) / (weekHeight / 2.5f)))
-            if (alpha in 0f..1f) {
+            val alpha = (1 - (Math.abs(defaultBottom - touchY) / (weekHeight / HIDE_MULTIPLIER)))
+            if (alpha in ALPHA_RANGE) {
                 viewProvider.applyAlpha(week, alpha)
             }
         }
     }
 
-    private fun checkForDefaultPositions(touchY: Float) {
-        var defaultBottom: Float
-        var currentBottom: Float
+    /**
+     *  Method prevents weeks above selected week from being hided/shown when shouldn't
+     */
 
-        for (week in 0 until weekCount) {
-            currentBottom = viewProvider.getWeekBottom(week)
-            defaultBottom = defaultPositions[week]
-            if (touchY < defaultBottom - weekHeight && week != selectedWeek) {
-                viewProvider.applyAlpha(week, 0f)
-            } else if (touchY > defaultBottom && currentBottom != defaultBottom) {
-                viewProvider.moveWeek(week, defaultBottom)
-                viewProvider.applyAlpha(week, 1f)
+    private fun controlAboveSelected(touchY: Float, overScroll: Boolean = false) {
+        val weeksAbove = weekCount - (weekCount - selectedWeek)
+        var weekTop: Float
+        var weekBottom: Float
+
+        for (week in 0 until weeksAbove) {
+            weekTop = defaultPositions[week] - weekHeight
+            weekBottom = defaultPositions[week]
+
+            when {
+                overScroll -> viewProvider.applyAlpha(week, ALPHA_INVISIBLE)
+
+                // makes sure that week hide
+                touchY > weekTop && touchY < weekBottom -> {
+                    viewProvider.applyAlpha(week, ALPHA_INVISIBLE)
+                }
+                // makes sure that week show
+                touchY > weekBottom + weekHeight -> {
+                    viewProvider.applyAlpha(week, ALPHA_VISIBLE)
+                }
             }
         }
     }
 
+    /**
+     *  Method prevents weeks below selected week from being hided/shown when shouldn't
+     */
+
+    private fun controlBelowSelected(touchY: Float) {
+        for (week in selectedWeek + 1 until weekCount) {
+            when {
+                // touch below default bottom position
+                touchY > defaultPositions[week] -> {
+                    viewProvider.applyAlpha(week, ALPHA_VISIBLE)
+                }
+                // touch above default top position
+                touchY < defaultPositions[week] - weekHeight -> {
+                    viewProvider.applyAlpha(week, ALPHA_INVISIBLE)
+                }
+            }
+        }
+    }
+
+    /**
+     *  Method move week depends on current and touch positions
+     */
+
     private fun moveWeek(which: Int, weekBottom: Float, touchY: Float, defaultPosition: Float) {
         when {
+            // check if week need to be placed on default position
             weekBottom != defaultPosition && touchY > defaultPosition -> {
                 viewProvider.moveWeek(which, defaultPosition)
             }
@@ -174,6 +221,11 @@ class MoveManagerImpl(private val viewProvider: ViewProvider) : MoveManager {
             }
         }
     }
+
+    /**
+     *  True when finger moved more than one week height from touch start point
+     *  False otherwise
+     */
 
     private fun isNeedCollapse(y: Float) = Math.abs(startPoint - y) > weekHeight && isCollapsed.not()
 

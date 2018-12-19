@@ -10,9 +10,9 @@ class DateManagerImpl(private val dateView: DateView) : DateManager {
 
     private val calendar = Calendar.getInstance()
 
-    private var currentMonthLabel = ""
-    private var nextMonthLabel = ""
-    private var previousMonthLabel = ""
+    private var currentMonthLabel = EMPTY_STRING
+    private var nextMonthLabel = EMPTY_STRING
+    private var previousMonthLabel = EMPTY_STRING
 
     override fun addDay() {
         calendar.add(DAY_OF_MONTH, 1)
@@ -29,21 +29,25 @@ class DateManagerImpl(private val dateView: DateView) : DateManager {
 
         val daysAfter = calendar.getDaysAfter()
 
-        //scroll back to first day of month
+        // scroll back to first day of month
         calendar.set(DAY_OF_MONTH, 1)
 
         val daysBefore = calendar.getDaysBefore()
 
-        // offset to total days start
+        // offset to displayed days start
         calendar.add(Calendar.DAY_OF_YEAR, -daysBefore)
 
         dateView.displayDate(daysBefore, daysNormal, daysAfter)
 
-        //restore selected date
+        // restore selected date
         calendar.time = date
-        //select day on screen
+        // select day on screen
         dateView.selectDay(date)
     }
+
+    /**
+     * Count days only in current month
+     */
 
     private fun findNormalDaysCount(): Int {
         var prevDay = calendar[DAY_OF_MONTH]
@@ -58,7 +62,7 @@ class DateManagerImpl(private val dateView: DateView) : DateManager {
                 calendar.add(DAY_OF_MONTH, 1)
             }
         }
-        return 0
+        return EMPTY_INT
     }
 
     override fun getCurrentMonthLabel() = currentMonthLabel

@@ -20,6 +20,8 @@ const val EMPTY_INT = 0
 
 const val EMPTY_FLOAT = 0f
 
+const val HIDE_MULTIPLIER = 2.5f
+
 const val EMPTY_STRING = ""
 
 const val DEFAULT_DRAG_HEIGHT = 20
@@ -27,6 +29,12 @@ const val DEFAULT_DRAG_HEIGHT = 20
 const val DEFAULT_DRAG_TEXT_SIZE = 15
 
 const val KALENDAR_SPEED = 500L
+
+const val ALPHA_INVISIBLE = 0f
+
+const val ALPHA_VISIBLE = 1f
+
+val ALPHA_RANGE = 0f..1f
 
 val DAYS_IN_WEEK_RANGE = 0 until 7
 
@@ -83,7 +91,7 @@ fun Calendar.previousMonthName(): String {
     return pre
 }
 
-fun Calendar.currentMonthName() = getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.getDefault())
+fun Calendar.currentMonthName(): String = getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.getDefault())
 
 fun Calendar.nextMonthName(): String {
     this.add(Calendar.MONTH, 1)

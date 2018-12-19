@@ -115,9 +115,17 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         attrs.recycle()
     }
 
+    /**
+     * Method allow you to set date and will display it
+     */
+
     fun setDate(date: Date) {
         dateManager.setDate(date)
     }
+
+    /**
+     * Method allow you to change current month by one forward or backward
+     */
 
     fun scrollMonth(forward: Boolean = true) {
         if (moveManager.isCollapsed) {
@@ -138,7 +146,15 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         }
     }
 
+    /**
+     * Method provide current selected date
+     */
+
     fun getCurrentDate() = dateManager.getCurrentDate()
+
+    /**
+     * Method creates week with days inside
+     */
 
     private fun createWeek(emptyDays: Int, emptyAtStart: Boolean): LinearLayout {
         return LinearLayout(context).apply {
@@ -152,6 +168,10 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
             attachDayToWeek(this, emptyAtStart, emptyDays)
         }
     }
+
+    /**
+     * Method creates day and add it to the current creating week
+     */
 
     private fun attachDayToWeek(week: LinearLayout, emptyAtStart: Boolean, emptyDays: Int) {
         if (emptyAtStart) {
@@ -208,11 +228,11 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
 
     override fun onDayClick(day: Day) {
         if (previousSelectedDay != day) {
-            if (moveManager.isBusy.not() && moveManager.isCollapsed.not()) {
+            if (moveManager.isInAction.not() && moveManager.isCollapsed.not()) {
                 if (day.canClick.not()) {
                     selectDayAndSwitchMonth(day)
                 } else {
-                    changeColors(day)
+                    changeDayColors(day)
                     selectWeek(day)
                 }
             } else {
@@ -224,6 +244,10 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         listener?.onDayClick(day.date)
     }
 
+    /**
+     * Method switch to the next or previous month and set date from the day as current
+     */
+
     private fun selectDayAndSwitchMonth(day: Day) {
         if (day.date.time > dateManager.getCurrentDate().time) {
             dateManager.goNextMonth()
@@ -234,6 +258,10 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         selectDay(day.date)
     }
 
+    /**
+     * Method selects week which will not be collapsed
+     */
+
     private fun selectWeek(selectedDay: View?) {
         selectedDay?.let {
             val parent = it.parent as View
@@ -243,7 +271,11 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         }
     }
 
-    private fun changeColors(newSelectedDay: View?) {
+    /**
+     * Method change unselected day color to selected day color
+     */
+
+    private fun changeDayColors(newSelectedDay: View?) {
         newSelectedDay?.setBackgroundResource(selectedDayColor)
         previousSelectedDay?.background = null
         previousSelectedDay = newSelectedDay
@@ -265,6 +297,10 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         removeAllViews()
     }
 
+    /**
+     * Method creates whole view hierarchy
+     */
+
     private fun createContent(daysBefore: Int, daysNormal: Int, daysAfter: Int) {
         orientation = VERTICAL
         createMonthSwitch()
@@ -273,6 +309,10 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         createDragView()
         makeWrapContent()
     }
+
+    /**
+     * Method makes root view height as wrap content
+     */
 
     private fun makeWrapContent() {
         post {
@@ -285,6 +325,10 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         }
     }
 
+    /**
+     * Method calculates total weeks amount and creates weeks depends on calculated count
+     */
+
     private fun createWeeks(daysBefore: Int, daysNormal: Int, daysAfter: Int) {
         val totalDays = daysBefore + daysAfter + daysNormal
         val weeksAmount = totalDays / DAYS_IN_WEEK
@@ -296,6 +340,11 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
             }
         }
     }
+
+
+    /**
+     * Method creates view at the bottom of root view
+     */
 
     private fun createDragView() {
         addView(TextView(context).apply {
@@ -310,6 +359,10 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
             gravity = Gravity.BOTTOM
         }
     }
+
+    /**
+     * Method creates days which able to switch month and implements month switch logic
+     */
 
     private fun createMonthSwitch() {
         addView(LinearLayout(context).apply {
@@ -339,22 +392,34 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         }
     }
 
+    /**
+     * Method calculates total root size
+     */
+
     private fun calculateBounds(left: Int, top: Int, right: Int, bottom: Int) {
         totalWidth = right - left
         totalHeight = bottom - top
         daySize = totalWidth / DAYS_IN_WEEK
     }
 
+    /**
+     * Method creates week day names container
+     */
+
     private fun createWeekDays() {
         addView(LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             isClickable = true
             isFocusable = true
-            for (i in 0 until 7) {
+            for (i in DAYS_IN_WEEK_RANGE) {
                 addView(createWeekDay(dateManager.getWeekDayName(i)))
             }
         })
     }
+
+    /**
+     * Method creates week day name
+     */
 
     private fun createWeekDay(label: String) =
         TextView(context).apply {
@@ -402,6 +467,10 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         listener?.onStateChanged(collapsed)
     }
 
+    /**
+     * Method make collapsed weeks inactive
+     */
+
     private fun invisibleDaysClick(enabled: Boolean) {
         val week = getChildAt(BLOCKING_TOUCH_WEEK) as ViewGroup
         week.clicks(enabled)
@@ -414,7 +483,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         getChildAt(week + WEEK_OFFSET).alpha = alpha
     }
 
-    override fun viewHeight() = layoutParams.height
+    override fun getViewTotalHeight() = layoutParams.height
 
     override fun getViewTop() = top
 
