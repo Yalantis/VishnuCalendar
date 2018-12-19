@@ -162,9 +162,6 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
             isClickable = true
             isFocusable = true
             background = ContextCompat.getDrawable(context, R.drawable.unselected_week)
-            layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply {
-                setPadding(0, 0, 0, dp(5))
-            }
             attachDayToWeek(this, emptyAtStart, emptyDays)
         }
     }
@@ -369,7 +366,11 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
             isClickable = true
             isFocusable = true
 
-            setPadding(dp(8), dp(16), dp(8), dp(16))
+            setPadding(
+                resources.getDimension(R.dimen.small_padding).toInt(),
+                resources.getDimension(R.dimen.medium_padding).toInt(),
+                resources.getDimension(R.dimen.small_padding).toInt(),
+                resources.getDimension(R.dimen.medium_padding).toInt())
 
             addView(createMonthDay(Month.TYPE_LEFT, dateManager.getPreviousMonthLabel()) {
                 scrollMonth(false)
