@@ -226,6 +226,10 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         }
     }
 
+    /**
+     * Method checks clicked day and make this day selected or post selection action in queue
+     */
+
     private fun applyDaySelection(day: Day) {
         if (previousSelectedDay != day) {
             if (moveManager.isInAction.not() && moveManager.isCollapsed.not()) {
@@ -238,6 +242,10 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
             dateManager.setCurrentDate(day.date)
         }
     }
+
+    /**
+     * Method creates day view which will be later displayed
+     */
 
     private fun createDay(isEmpty: Boolean): TextView {
         return Day(context).apply {
