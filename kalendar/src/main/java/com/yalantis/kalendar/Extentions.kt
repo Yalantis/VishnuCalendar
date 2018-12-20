@@ -1,7 +1,6 @@
 package com.yalantis.kalendar
 
 import android.transition.TransitionManager
-import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
 import java.util.*
@@ -35,15 +34,6 @@ const val ALPHA_VISIBLE = 1f
 val ALPHA_RANGE = 0f..1f
 
 val DAYS_IN_WEEK_RANGE = 0 until 7
-
-
-infix fun View.dp(value: Int): Int {
-    return TypedValue.applyDimension(
-        TypedValue.COMPLEX_UNIT_DIP,
-        value.toFloat(),
-        this.resources.displayMetrics
-    ).toInt()
-}
 
 fun View.clicks(enabled: Boolean) {
     if (enabled) {
