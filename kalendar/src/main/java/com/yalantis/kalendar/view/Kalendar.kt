@@ -118,6 +118,23 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
     }
 
     /**
+     * Method allow you to force collapse view
+     */
+
+    fun collapse() {
+        moveManager.collapse()
+    }
+
+    /**
+     * Method allow you to force expand view
+     */
+
+    fun expand() {
+        moveManager.expand()
+    }
+
+
+    /**
      * Method allow you to set date and will display it
      */
 
