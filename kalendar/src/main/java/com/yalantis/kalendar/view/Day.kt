@@ -20,7 +20,11 @@ class Day(context: Context) : TextView(context) {
         set(value) {
             field = value
             setOnClickListener {
-                clickListener?.onDayClick(it as Day)
+                if (value) {
+                    clickListener?.onNormalDayClick(it as Day)
+                } else {
+                    clickListener?.onDisabledDayClick(it as Day)
+                }
             }
         }
 
@@ -44,6 +48,8 @@ class Day(context: Context) : TextView(context) {
     }
 
     interface OnDayClickListener {
-        fun onDayClick(day: Day)
+        fun onNormalDayClick(day: Day)
+
+        fun onDisabledDayClick(day: Day)
     }
 }

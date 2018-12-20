@@ -50,13 +50,13 @@ interface DateManager {
      * Switch from current month to one month forward
      */
 
-    fun goNextMonth()
+    fun goNextMonth(where: Date? = null)
 
     /**
      * Switch from current month to one month backward
      */
 
-    fun goPreviousMonth()
+    fun goPreviousMonth(where: Date? = null)
 
     /**
      * Set date without displaying it

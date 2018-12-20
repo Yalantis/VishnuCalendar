@@ -19,9 +19,7 @@ class DateManagerImpl(private val dateView: DateView) : DateManager {
     }
 
     override fun setDate(date: Date) {
-        //clear invalid views
         dateView.clearDate()
-
         calendar.time = date
         currentMonthLabel = calendar.currentMonthName()
         nextMonthLabel = calendar.nextMonthName()
@@ -85,14 +83,18 @@ class DateManagerImpl(private val dateView: DateView) : DateManager {
         return day
     }
 
-    override fun goNextMonth() {
-        calendar.add(MONTH, 1)
-        setDate(calendar.time)
+    override fun goNextMonth(where: Date?) {
+        if (where == null) {
+            calendar.add(MONTH, 1)
+            setDate(calendar.time)
+        } else setDate(where)
     }
 
-    override fun goPreviousMonth() {
-        calendar.add(MONTH, -1)
-        setDate(calendar.time)
+    override fun goPreviousMonth(where: Date?) {
+        if (where == null) {
+            calendar.add(MONTH, -1)
+            setDate(calendar.time)
+        } else setDate(where)
     }
 
     override fun getDayLabel() = calendar[DAY_OF_MONTH].toString()

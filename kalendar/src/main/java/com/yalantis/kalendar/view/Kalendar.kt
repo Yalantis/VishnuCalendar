@@ -219,10 +219,23 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
             for (j in 0 until week.childCount) {
                 day = week.getChildAt(j) as Day
                 if (day.date == date) {
-                    post { onDayClick(day) }
+                    applyDaySelection(day)
                     return
                 }
             }
+        }
+    }
+
+    private fun applyDaySelection(day: Day) {
+        if (previousSelectedDay != day) {
+            if (moveManager.isInAction.not() && moveManager.isCollapsed.not()) {
+                changeDayColors(day)
+                selectWeek(day)
+            } else {
+                actionQueue.add(KAction(ACTION_SELECT_DAY))
+                moveManager.expand()
+            }
+            dateManager.setCurrentDate(day.date)
         }
     }
 
@@ -242,21 +255,13 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         }
     }
 
-    override fun onDayClick(day: Day) {
-        if (previousSelectedDay != day) {
-            if (moveManager.isInAction.not() && moveManager.isCollapsed.not()) {
-                if (day.canClick.not()) {
-                    selectDayAndSwitchMonth(day)
-                } else {
-                    changeDayColors(day)
-                    selectWeek(day)
-                }
-            } else {
-                actionQueue.add(KAction(ACTION_SELECT_DAY))
-                moveManager.expand()
-            }
-            dateManager.setCurrentDate(day.date)
-        }
+    override fun onNormalDayClick(day: Day) {
+        applyDaySelection(day)
+        listener?.onDayClick(day.date)
+    }
+
+    override fun onDisabledDayClick(day: Day) {
+        selectDayAndSwitchMonth(day)
         listener?.onDayClick(day.date)
     }
 
@@ -266,12 +271,10 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
 
     private fun selectDayAndSwitchMonth(day: Day) {
         if (day.date.time > dateManager.getCurrentDate().time) {
-            dateManager.goNextMonth()
+            dateManager.goNextMonth(day.date)
         } else {
-            dateManager.goPreviousMonth()
+            dateManager.goPreviousMonth(day.date)
         }
-        dateManager.setCurrentDate(day.date)
-        selectDay(day.date)
     }
 
     /**
@@ -456,8 +459,6 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         layoutParams = layoutParams.apply {
             height = newBottom
         }
-        setDragTop(newBottom - dragHeight.toFloat())
-        invalidate()
     }
 
     override fun displayDate(emptyBefore: Int, normal: Int, emptyAfter: Int) {

@@ -26,8 +26,6 @@ const val EMPTY_STRING = ""
 
 const val DEFAULT_DRAG_HEIGHT = 20
 
-const val DEFAULT_DRAG_TEXT_SIZE = 15
-
 const val KALENDAR_SPEED = 500L
 
 const val ALPHA_INVISIBLE = 0f
