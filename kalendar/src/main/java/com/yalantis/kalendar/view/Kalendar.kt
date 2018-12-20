@@ -219,7 +219,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
             for (j in 0 until week.childCount) {
                 day = week.getChildAt(j) as Day
                 if (day.date == date) {
-                    applyDaySelection(day)
+                    post { applyDaySelection(day) }
                     return
                 }
             }
