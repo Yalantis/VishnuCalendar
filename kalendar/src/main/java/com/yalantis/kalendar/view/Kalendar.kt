@@ -2,9 +2,7 @@ package com.yalantis.kalendar.view
 
 import android.animation.LayoutTransition
 import android.content.Context
-import android.graphics.Color
 import android.graphics.Typeface
-import android.support.annotation.ColorInt
 import android.support.annotation.ColorRes
 import android.support.annotation.DrawableRes
 import android.support.v4.content.ContextCompat
@@ -58,7 +56,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
     var listener: KalendarListener? = null
 
     @DrawableRes
-    var selectedDayColor: Int = R.drawable.day_background
+    var selectedDayDrawable: Int = R.drawable.day_background
         set(value) {
             field = value
             invalidate()
@@ -66,14 +64,14 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
 
 
     @ColorRes
-    var dragColor = android.R.color.holo_blue_dark
+    var dragColor = R.color.drag_color
         set(value) {
             field = value
             invalidate()
         }
 
-    @ColorInt
-    var dragTextColor = Color.WHITE
+    @ColorRes
+    var dragTextColor = R.color.drag_text_color
         set(value) {
             field = value
             invalidate()
@@ -107,11 +105,15 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
 
     private fun obtainStylable(attributeSet: AttributeSet) {
         val attrs = context.obtainStyledAttributes(attributeSet, R.styleable.Kalendar)
-        if (attrs.hasValue(R.styleable.Kalendar_dragHeight)) {
-            dragHeight = attrs.getDimensionPixelSize(R.styleable.Kalendar_dragHeight, DEFAULT_DRAG_HEIGHT)
-            dragText = attrs.getString(R.styleable.Kalendar_dragText) ?: EMPTY_STRING
-            dragTextSize = attrs.getInt(R.styleable.Kalendar_dragTextSize, DEFAULT_DRAG_TEXT_SIZE)
-        }
+        dragHeight = attrs.getDimensionPixelSize(R.styleable.Kalendar_dragHeight, DEFAULT_DRAG_HEIGHT)
+        dragColor = attrs.getColor(R.styleable.Kalendar_dragColor, ContextCompat.getColor(context, R.color.drag_color))
+        dragText = attrs.getString(R.styleable.Kalendar_dragText) ?: EMPTY_STRING
+        dragTextColor = attrs.getColor(
+            R.styleable.Kalendar_dragTextColor,
+            ContextCompat.getColor(context, R.color.drag_text_color)
+        )
+        dragTextSize = attrs.getDimensionPixelSize(R.styleable.Kalendar_dragTextSize, R.dimen.drag_text_size)
+        selectedDayDrawable = attrs.getResourceId(R.styleable.Kalendar_selectedDayDrawable, R.drawable.day_background)
         attrs.recycle()
     }
 
@@ -273,7 +275,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
      */
 
     private fun changeDayColors(newSelectedDay: View?) {
-        newSelectedDay?.setBackgroundResource(selectedDayColor)
+        newSelectedDay?.setBackgroundResource(selectedDayDrawable)
         previousSelectedDay?.background = null
         previousSelectedDay = newSelectedDay
     }
@@ -349,7 +351,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
             textSize = dragTextSize.toFloat()
             setTextColor(dragTextColor)
             textAlignment = View.TEXT_ALIGNMENT_CENTER
-            setBackgroundResource(dragColor)
+            setBackgroundColor(dragColor)
             this.layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, dragHeight)
         })
         getChildAt(childCount - 1).layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, dragHeight).apply {
@@ -370,7 +372,8 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
                 resources.getDimension(R.dimen.small_padding).toInt(),
                 resources.getDimension(R.dimen.medium_padding).toInt(),
                 resources.getDimension(R.dimen.small_padding).toInt(),
-                resources.getDimension(R.dimen.medium_padding).toInt())
+                resources.getDimension(R.dimen.medium_padding).toInt()
+            )
 
             addView(createMonthDay(Month.TYPE_LEFT, dateManager.getPreviousMonthLabel()) {
                 scrollMonth(false)

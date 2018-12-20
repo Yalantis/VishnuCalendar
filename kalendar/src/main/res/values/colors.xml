@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <color name="day_color">#949494</color>
+
+    <color name="drag_color">#b6b6b6</color>
+
+    <color name="drag_text_color">#ffffff</color>
+
+</resources>

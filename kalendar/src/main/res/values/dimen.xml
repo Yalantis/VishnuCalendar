@@ -2,4 +2,5 @@
 <resources>
     <dimen name="small_padding">8dp</dimen>
     <dimen name="medium_padding">16dp</dimen>
+    <dimen name="drag_text_size">12sp</dimen>
 </resources>

@@ -3,7 +3,10 @@
     <declare-styleable name="Kalendar">
         <attr name="dragText" format="string"/>
         <attr name="dragHeight" format="dimension"/>
-        <attr name="dragTextSize" format="integer"/>
+        <attr name="dragTextSize" format="dimension"/>
+        <attr name="dragTextColor" format="color"/>
+        <attr name="dragColor" format="color"/>
+        <attr name="selectedDayDrawable" format="reference"/>
     </declare-styleable>
 
 </resources>
