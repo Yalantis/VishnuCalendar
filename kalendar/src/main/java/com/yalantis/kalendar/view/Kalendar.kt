@@ -22,10 +22,7 @@ import com.yalantis.kalendar.interfaces.DateManager
 import com.yalantis.kalendar.interfaces.DateView
 import com.yalantis.kalendar.interfaces.MoveManager
 import com.yalantis.kalendar.interfaces.ViewProvider
-import com.yalantis.kalendar.model.ACTION_NEXT_MONTH
-import com.yalantis.kalendar.model.ACTION_PREV_MONTH
-import com.yalantis.kalendar.model.ACTION_SELECT_DAY
-import com.yalantis.kalendar.model.KAction
+import com.yalantis.kalendar.model.*
 import java.util.*
 
 class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(context, attributeSet),
@@ -269,7 +266,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
     }
 
     override fun onDisabledDayClick(day: Day) {
-        selectDayAndSwitchMonth(day)
+        selectDayAndSwitchMonth(day.date)
         listener?.onDayClick(day.date)
     }
 
@@ -277,11 +274,17 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
      * Method switch to the next or previous month and set date from the day as current
      */
 
-    private fun selectDayAndSwitchMonth(day: Day) {
-        if (day.date.time > dateManager.getCurrentDate().time) {
-            dateManager.goNextMonth(day.date)
+    private fun selectDayAndSwitchMonth(date: Date) {
+        if (moveManager.isInAction.not() && moveManager.isCollapsed.not()) {
+            if (date.time > dateManager.getCurrentDate().time) {
+                dateManager.goNextMonth(date)
+            } else {
+                dateManager.goPreviousMonth(date)
+            }
         } else {
-            dateManager.goPreviousMonth(day.date)
+            dateManager.setCurrentDate(date)
+            actionQueue.add(KAction(ACTION_SELECT_DISABLED_DAY))
+            moveManager.expand()
         }
     }
 
@@ -494,6 +497,9 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
                     }
                     ACTION_SELECT_DAY -> {
                         selectDay(dateManager.getCurrentDate())
+                    }
+                    ACTION_SELECT_DISABLED_DAY -> {
+                        selectDayAndSwitchMonth(dateManager.getCurrentDate())
                     }
                 }
                 actionQueue.remove(it)
