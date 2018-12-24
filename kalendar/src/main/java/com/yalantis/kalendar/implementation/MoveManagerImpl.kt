@@ -137,7 +137,7 @@ class MoveManagerImpl(private val viewProvider: ViewProvider) : MoveManager {
             viewProvider.setViewHeight(minHeight + dragHeight)
             viewProvider.setDragTop(minHeight.toFloat())
             controlAboveSelected(touchY, overScroll = true)
-            controlBelowSelected(touchY)
+            controlBelowSelected(touchY, overScroll = true)
         }
     }
 
@@ -186,9 +186,11 @@ class MoveManagerImpl(private val viewProvider: ViewProvider) : MoveManager {
      *  Method prevents weeks below selected week from being hided/shown when shouldn't
      */
 
-    private fun controlBelowSelected(touchY: Float) {
+    private fun controlBelowSelected(touchY: Float, overScroll: Boolean = false) {
         for (week in selectedWeek + 1 until weekCount) {
             when {
+                overScroll -> viewProvider.applyAlpha(week, ALPHA_INVISIBLE)
+
                 // touch below default bottom position
                 touchY > defaultPositions[week] -> {
                     viewProvider.applyAlpha(week, ALPHA_VISIBLE)
