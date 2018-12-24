@@ -72,7 +72,7 @@ interface ViewProvider {
      * Change current state of move
      */
 
-    fun moveStateChanged(collapsed: Boolean)
+    fun moveStateChanged(collapsed: Boolean, selectedWeek: Int)
 
     /**
      * Return root view top position

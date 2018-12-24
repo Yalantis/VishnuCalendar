@@ -13,8 +13,6 @@ const val DAYS_IN_WEEK = 7
 
 const val DEFAULT_DAY_TEXT_SIZE = 18f
 
-const val BLOCKING_TOUCH_WEEK = 3
-
 const val EMPTY_INT = 0
 
 const val EMPTY_FLOAT = 0f

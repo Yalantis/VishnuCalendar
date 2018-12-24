@@ -26,7 +26,7 @@ class MoveManagerImpl(private val viewProvider: ViewProvider) : MoveManager {
         override fun onAnimationEnd(animation: Animator?) {
             isInAction = false
             isCollapsed = isCollapsed.not()
-            viewProvider.moveStateChanged(isCollapsed)
+            viewProvider.moveStateChanged(isCollapsed, selectedWeek)
             animation?.removeAllListeners()
         }
     }

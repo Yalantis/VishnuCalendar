@@ -318,6 +318,11 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         }
     }
 
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        layoutParams = layoutParams.apply { height = WRAP_CONTENT }
+    }
+
     override fun onTouchEvent(event: MotionEvent) = moveManager.onTouch(event)
 
     override fun clearDate() {
@@ -459,7 +464,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
             typeface = weekDayTypeface
             gravity = Gravity.CENTER
             textAlignment = TextView.TEXT_ALIGNMENT_GRAVITY
-            setTextColor(resources.getColor(android.R.color.background_dark))
+            setTextColor(ContextCompat.getColor(context, android.R.color.background_dark))
             layoutParams = LinearLayout.LayoutParams(daySize, daySize)
         }
 
@@ -474,9 +479,9 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
     }
 
 
-    override fun moveStateChanged(collapsed: Boolean) {
+    override fun moveStateChanged(collapsed: Boolean, selectedWeek: Int) {
 
-        invisibleDaysClick(collapsed.not())
+        invisibleDaysClick(collapsed.not(), selectedWeek)
 
         actionQueue.firstOrNull()?.let {
             applyTransition {
@@ -501,11 +506,19 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
      * Method make collapsed weeks inactive
      */
 
-    private fun invisibleDaysClick(enabled: Boolean) {
-        val week = getChildAt(BLOCKING_TOUCH_WEEK) as ViewGroup
-        week.clicks(enabled)
-        for (i in DAYS_IN_WEEK_RANGE) {
-            (week.getChildAt(i) as Day).clicks(enabled)
+    private fun invisibleDaysClick(enabled: Boolean, selectedWeek: Int) {
+
+        var weekView: ViewGroup
+        val displayingWeek = selectedWeek + WEEK_OFFSET
+
+        for (week in WEEK_OFFSET until childCount - 1) {
+            if (week != displayingWeek) {
+                weekView = getChildAt(week) as ViewGroup
+                weekView.clicks(enabled)
+                for (day in DAYS_IN_WEEK_RANGE) {
+                    weekView.getChildAt(day).clicks(enabled)
+                }
+            }
         }
     }
 
