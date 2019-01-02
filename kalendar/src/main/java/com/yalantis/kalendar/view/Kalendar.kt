@@ -3,9 +3,6 @@ package com.yalantis.kalendar.view
 import android.animation.LayoutTransition
 import android.content.Context
 import android.graphics.Typeface
-import android.support.annotation.ColorRes
-import android.support.annotation.DrawableRes
-import android.support.v4.content.ContextCompat
 import android.util.AttributeSet
 import android.view.Gravity
 import android.view.MotionEvent
@@ -15,6 +12,9 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.annotation.ColorRes
+import androidx.annotation.DrawableRes
+import androidx.core.content.ContextCompat
 import com.yalantis.kalendar.*
 import com.yalantis.kalendar.implementation.DateManagerImpl
 import com.yalantis.kalendar.implementation.MoveManagerImpl
@@ -248,7 +248,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         return Day(context).apply {
             typeface = dayTypeface
             labelColor = if (isEmpty) {
-                ContextCompat.getColor(context, android.R.color.darker_gray)
+                androidx.core.content.ContextCompat.getColor(context, android.R.color.darker_gray)
             } else {
                 ContextCompat.getColor(context, android.R.color.background_dark)
             }
