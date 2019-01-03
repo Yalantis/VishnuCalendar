@@ -25,7 +25,7 @@ import com.yalantis.kalendar.interfaces.ViewProvider
 import com.yalantis.kalendar.model.*
 import java.util.*
 
-class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(context, attributeSet),
+class Kalendar(context: Context, attributeSet: AttributeSet? = null) : LinearLayout(context, attributeSet),
     ViewProvider, Day.OnDayClickListener, DateView {
 
     private var dragTextSize = EMPTY_INT
@@ -100,7 +100,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : LinearLayout(cont
         obtainStylable(attributeSet)
     }
 
-    private fun obtainStylable(attributeSet: AttributeSet) {
+    private fun obtainStylable(attributeSet: AttributeSet?) {
         val attrs = context.obtainStyledAttributes(attributeSet, R.styleable.Kalendar)
         dragHeight = attrs.getDimensionPixelSize(R.styleable.Kalendar_dragHeight, DEFAULT_DRAG_HEIGHT)
         dragColor = attrs.getColor(R.styleable.Kalendar_dragColor, ContextCompat.getColor(context, R.color.drag_color))
