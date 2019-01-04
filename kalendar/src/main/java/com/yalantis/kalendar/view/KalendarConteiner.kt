@@ -7,31 +7,65 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import androidx.fragment.app.Fragment
 import androidx.viewpager.widget.ViewPager
+import com.yalantis.kalendar.MonthPage
 import com.yalantis.kalendar.MonthPagerAdapter
-import com.yalantis.kalendar.Obertka
 
 class KalendarConteiner : Fragment() {
 
+    private val scrollListener = object : ViewPager.OnPageChangeListener {
+        override fun onPageScrollStateChanged(state: Int) {
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return createViewPager()
-    }
+        }
 
-    private fun createViewPager(): View? {
-        var linearLayout: LinearLayout? = null
-        context?.let {
-            linearLayout = LinearLayout(it).apply {
-                addView(ViewPager(it).apply {
-                    id = View.generateViewId()
-                    adapter = MonthPagerAdapter(childFragmentManager).apply {
-                        setMonths(listOf(
-                            Obertka.newInstance(Obertka.PREVIOUS),
-                            Obertka.newInstance(Obertka.CURRENT),
-                            Obertka.newInstance(Obertka.NEXT)))
-                    }
-                })
+        override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {
+        }
+
+        override fun onPageSelected(position: Int) {
+            val addToEnd = viewPager.adapter?.count == position
+            val addToStart = 0 == position
+
+            when {
+                addToEnd -> addMonthPageToEnd()
+                addToStart -> addMonthPageToStart()
             }
         }
-        return linearLayout
     }
+
+    private fun addMonthPageToStart() {
+        (viewPager.adapter as MonthPagerAdapter).addMonthToStart(MonthPage.newInstance(MonthPage.PREVIOUS))
+    }
+
+    private fun addMonthPageToEnd() {
+        (viewPager.adapter as MonthPagerAdapter).addMonthToEnd(MonthPage.newInstance(MonthPage.NEXT))
+    }
+
+    private lateinit var viewPager: ViewPager
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+        return createView()
+    }
+
+    private fun createView(): View? {
+        return LinearLayout(requireContext()).apply {
+            addView(createViewPager())
+        }
+    }
+
+    private fun createViewPager(): ViewPager {
+        viewPager = ViewPager(requireContext()).apply {
+            id = View.generateViewId()
+            addOnPageChangeListener(scrollListener)
+            adapter = MonthPagerAdapter(childFragmentManager).apply {
+                setMonths(
+                    listOf(
+                        MonthPage.newInstance(MonthPage.PREVIOUS),
+                        MonthPage.newInstance(MonthPage.CURRENT),
+                        MonthPage.newInstance(MonthPage.NEXT)
+                    )
+                )
+            }
+        }
+        return viewPager
+    }
+
 }

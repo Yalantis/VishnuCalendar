@@ -8,13 +8,13 @@ import androidx.fragment.app.Fragment
 import com.yalantis.kalendar.view.Kalendar
 import java.util.*
 
-class Obertka : Fragment() {
+class MonthPage : Fragment() {
 
     companion object {
         private const val MONTH_TYPE = "type"
 
-        fun newInstance(which: Int): Obertka {
-            return Obertka().apply {
+        fun newInstance(which: Int): MonthPage {
+            return MonthPage().apply {
                 arguments = Bundle().apply {
                     putInt(MONTH_TYPE, which)
                 }
@@ -28,15 +28,16 @@ class Obertka : Fragment() {
 
     private var monthType = CURRENT
 
+    private var changeListener: Kalendar.KalendarListener? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         monthType = arguments?.getInt(MONTH_TYPE) ?: CURRENT
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return Kalendar(context!!)
+        return Kalendar(context!!).apply { listener = changeListener }
     }
-
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
