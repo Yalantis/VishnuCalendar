@@ -2,13 +2,12 @@ package com.yalantis.kalendar.view
 
 import android.content.Context
 import android.util.AttributeSet
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.FrameLayout
 import androidx.viewpager.widget.ViewPager
-import com.yalantis.kalendar.EMPTY_INT
-import com.yalantis.kalendar.MonthPagerAdapter
-import com.yalantis.kalendar.R
+import com.yalantis.kalendar.*
 import com.yalantis.kalendar.model.KalendarStylable
 import java.util.*
 
@@ -23,6 +22,8 @@ class Kalendar(context: Context, val attributeSet: AttributeSet) : FrameLayout(c
 
     private var pagerColor = EMPTY_INT
 
+    private var previousPage = START_PAGE
+
     var changeListener: MonthPage.KalendarListener? = null
 
     private val scrollListener = object : ViewPager.SimpleOnPageChangeListener() {
@@ -32,13 +33,30 @@ class Kalendar(context: Context, val attributeSet: AttributeSet) : FrameLayout(c
                 viewPager.adapter?.count?.minus(2) -> refreshAdapterBack()
             }
             makeWrapContent(position)
+            updateMonth(position)
         }
+    }
+
+    private fun updateMonth(position: Int) {
+        when {
+            previousPage > position -> {
+                changeListener?.onMonthChanged(false)
+            }
+            previousPage < position -> {
+                changeListener?.onMonthChanged(true)
+            }
+        }
+        previousPage = position
     }
 
     init {
         parseStyledAttributes()
         createView()
     }
+
+    /**
+     * This method set view pager's size to wrap content on each page selection
+     */
 
     private fun makeWrapContent(position: Int) {
         val adapter = viewPager.adapter as MonthPagerAdapter
@@ -48,11 +66,19 @@ class Kalendar(context: Context, val attributeSet: AttributeSet) : FrameLayout(c
         }
     }
 
+    /**
+     * This method add new months to view pager's adapter start
+     */
+
     private fun refreshAdapterFront() {
         val adapter = viewPager.adapter as MonthPagerAdapter
         adapter.addToStart(monthsToStart())
-        viewPager.currentItem = 7
+        viewPager.currentItem = START_PAGE + 1
     }
+
+    /**
+     * This method add new months to view pager's adapter back
+     */
 
     private fun refreshAdapterBack() {
         val adapter = viewPager.adapter as MonthPagerAdapter
@@ -60,6 +86,10 @@ class Kalendar(context: Context, val attributeSet: AttributeSet) : FrameLayout(c
         adapter.addToEnd(monthsToEnd())
         viewPager.currentItem = currentItem
     }
+
+    /**
+     * This method creates new months to view pager's adapter start
+     */
 
     private fun monthsToStart(): List<Date> {
         val adapter = viewPager.adapter as MonthPagerAdapter
@@ -72,6 +102,10 @@ class Kalendar(context: Context, val attributeSet: AttributeSet) : FrameLayout(c
         }.toList()
     }
 
+    /**
+     * This method creates new months to view pager's adapter back
+     */
+
     private fun monthsToEnd(): List<Date> {
         val adapter = viewPager.adapter as MonthPagerAdapter
         val lastDate = adapter.getLastDate()
@@ -82,6 +116,10 @@ class Kalendar(context: Context, val attributeSet: AttributeSet) : FrameLayout(c
             calendar.time
         }.toList()
     }
+
+    /**
+     * Initializing view pager for root view
+     */
 
     private fun createViewPager(): View? {
         viewPager = ViewPager(context).apply {
@@ -94,14 +132,14 @@ class Kalendar(context: Context, val attributeSet: AttributeSet) : FrameLayout(c
                 setMonths(createYear(Calendar.getInstance().time))
             }
         }
-        viewPager.offscreenPageLimit = 2
-        viewPager.currentItem = 6
+        viewPager.offscreenPageLimit = PAGE_OFFSET
+        viewPager.currentItem = START_PAGE
         return viewPager
     }
 
 
     /**
-     * Method allow you to force collapse view
+     * Method allow you to force collapse current page
      */
 
     fun collapse() {
@@ -110,13 +148,33 @@ class Kalendar(context: Context, val attributeSet: AttributeSet) : FrameLayout(c
     }
 
     /**
-     * Method allow you to force expand view
+     * Method allow you to force expand current page
      */
 
     fun expand() {
         val currentPage = (viewPager.adapter as MonthPagerAdapter).getPageAt(viewPager.currentItem)
         (currentPage as MonthPage).expand()
     }
+
+    /**
+     * Method allow you to get page by it position in adapter
+     *  Remember: adapter positions rewrites after view pager reach first position
+     */
+
+    fun getMonthAt(position: Int) = (viewPager.adapter as MonthPagerAdapter).getPageAt(position)
+
+    /**
+     * Method allow you to get date from current selected page
+     */
+
+    fun getSelectedPageDate(): Date {
+        val currentPage = (viewPager.adapter as MonthPagerAdapter).getPageAt(viewPager.currentItem)
+        return (currentPage as MonthPage).getCurrentDate()
+    }
+
+    /**
+     * Method creates initial year, returns back on 7 month and iterate forward for 12 month
+     */
 
     private fun createYear(from: Date): List<Date> {
         val calendar = Calendar.getInstance()
@@ -128,6 +186,9 @@ class Kalendar(context: Context, val attributeSet: AttributeSet) : FrameLayout(c
         }.toList()
     }
 
+    /**
+     * Method creates object with style attributes for each page
+     */
 
     private fun parseStyledAttributes() {
         stylable = KalendarStylable(context.obtainStyledAttributes(attributeSet, R.styleable.Kalendar))
@@ -138,6 +199,10 @@ class Kalendar(context: Context, val attributeSet: AttributeSet) : FrameLayout(c
         super.onAttachedToWindow()
         layoutParams = layoutParams.apply { this.height = WRAP_CONTENT }
     }
+
+    /**
+     * Method creates view pager as child of root element
+     */
 
     private fun createView() {
         addView(createViewPager())
@@ -164,13 +229,20 @@ class Kalendar(context: Context, val attributeSet: AttributeSet) : FrameLayout(c
         changeListener?.onHeightChanged(newHeight)
     }
 
-    override fun onMonthChanged(forward: Boolean) {
-        if (forward) {
+    override fun onMonthChanged(forward: Boolean, date: Date?) {
+        val adapter = (viewPager.adapter as MonthPagerAdapter)
+
+        val page = if (forward) {
             viewPager.arrowScroll(ViewPager.FOCUS_RIGHT)
+            adapter.getPageAt(viewPager.currentItem)
         } else {
             viewPager.arrowScroll(ViewPager.FOCUS_LEFT)
+            adapter.getPageAt(viewPager.currentItem)
         }
-        changeListener?.onMonthChanged(forward)
+
+        date?.let { page?.selectDay(it) }
+
+        changeListener?.onMonthChanged(forward, date)
     }
 
 }

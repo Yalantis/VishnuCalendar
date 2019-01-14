@@ -69,7 +69,7 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
 
 
     @ColorRes
-    var dragColor = R.color.drag_color
+    var dragColor = R.color.light_gray
         set(value) {
             field = value
             invalidate()
@@ -129,10 +129,6 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
     override fun onVisibilityAggregated(isVisible: Boolean) {
         super.onVisibilityAggregated(isVisible)
         if (isVisible) makeWrapContent()
-    }
-
-    fun scrollMonth(forward: Boolean = true) {
-        listener?.onMonthChanged(forward)
     }
 
     /**
@@ -267,13 +263,12 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
 
     private fun selectDayAndSwitchMonth(date: Date) {
         if (moveManager.isInAction.not() && moveManager.isCollapsed.not()) {
-//            if (date.time > dateManager.getCurrentDate().time) {
-//                dateManager.goNextMonth(date)
-//            } else {
-//                dateManager.goPreviousMonth(date)
-//            }
+            if (dateManager.getCurrentDate().time > date.time) {
+                listener?.onMonthChanged(false, date)
+            } else {
+                listener?.onMonthChanged(true, date)
+            }
         } else {
-//            dateManager.setCurrentDate(date)
             actionQueue.add(KAction(ACTION_SELECT_DISABLED_DAY))
             moveManager.expand()
         }
@@ -394,12 +389,12 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
             )
 
             addView(createMonthDay(Month.TYPE_LEFT, dateManager.getPreviousMonthLabel()) {
-                scrollMonth(false)
+                listener?.onMonthChanged(false)
             })
             addView(createMonthDay(Month.TYPE_MID, dateManager.getCurrentMonthLabel()))
 
             addView(createMonthDay(Month.TYPE_RIGHT, dateManager.getNextMonthLabel()) {
-                scrollMonth(true)
+                listener?.onMonthChanged(true)
             })
         })
     }
@@ -492,7 +487,7 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
                         selectDay(dateManager.getCurrentDate())
                     }
                     ACTION_SELECT_DISABLED_DAY -> {
-//                        selectDayAndSwitchMonth(dateManager.getCurrentDate())
+                        selectDayAndSwitchMonth(dateManager.getCurrentDate())
                     }
                 }
                 actionQueue.remove(it)
@@ -574,7 +569,7 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
         fun onDayClick(date: Date)
         fun onStateChanged(isCollapsed: Boolean)
         fun onHeightChanged(newHeight: Int)
-        fun onMonthChanged(forward: Boolean)
+        fun onMonthChanged(forward: Boolean, date: Date? = null)
         fun onSizeMeasured(monthPage: MonthPage, collapsedHeight: Int, totalHeight: Int)
     }
 }
