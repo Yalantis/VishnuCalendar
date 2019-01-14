@@ -1,15 +1,14 @@
 package com.yalantis.kalendar.view
 
 import android.animation.LayoutTransition
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Typeface
-import android.util.AttributeSet
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
-import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.annotation.ColorRes
@@ -24,15 +23,14 @@ import com.yalantis.kalendar.interfaces.MoveManager
 import com.yalantis.kalendar.interfaces.ViewProvider
 import com.yalantis.kalendar.model.*
 import java.util.*
+import kotlin.collections.ArrayList
 
-class MonthPage(context: Context, attributeSet: AttributeSet? = null) : LinearLayout(context, attributeSet),
-    ViewProvider, Day.OnDayClickListener, DateView {
+@SuppressLint("ViewConstructor")
+class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(context), ViewProvider, Day.OnDayClickListener, DateView {
 
     private var dragTextSize = EMPTY_INT
 
     private var totalWidth = EMPTY_INT
-
-    private var totalHeight = EMPTY_INT
 
     private var daySize = EMPTY_INT
 
@@ -49,6 +47,14 @@ class MonthPage(context: Context, attributeSet: AttributeSet? = null) : LinearLa
     private val dateManager: DateManager by lazy { DateManagerImpl(this) }
 
     private val actionQueue = ArrayList<KAction>()
+
+    private val weekDefaultPositions = ArrayList<Float>()
+
+    var totalHeight = EMPTY_INT
+
+    var isCollapsed = false
+
+    var collapsedHeight = EMPTY_INT
 
     var listener: KalendarListener? = null
 
@@ -82,7 +88,7 @@ class MonthPage(context: Context, attributeSet: AttributeSet? = null) : LinearLa
             invalidate()
         }
 
-    var weekDayTypeface: Typeface = Typeface.MONOSPACE
+    var weekDayTypeface: Typeface = Typeface.DEFAULT
 
     var monthTypeface: Typeface = Typeface.DEFAULT_BOLD
         set(value) {
@@ -93,27 +99,23 @@ class MonthPage(context: Context, attributeSet: AttributeSet? = null) : LinearLa
     var kalendarBackground: Int = android.R.color.white
         set(value) {
             field = value
-            setBackgroundResource(value)
+            setBackgroundColor(value)
             invalidate()
         }
 
     init {
         layoutTransition = LayoutTransition()
-        obtainStylable(attributeSet)
+        obtainStylable(stylable)
     }
 
-    private fun obtainStylable(attributeSet: AttributeSet?) {
-        val attrs = context.obtainStyledAttributes(attributeSet, R.styleable.Kalendar)
-        dragHeight = attrs.getDimensionPixelSize(R.styleable.Kalendar_dragHeight, DEFAULT_DRAG_HEIGHT)
-        dragColor = attrs.getColor(R.styleable.Kalendar_dragColor, ContextCompat.getColor(context, R.color.drag_color))
-        dragText = attrs.getString(R.styleable.Kalendar_dragText) ?: EMPTY_STRING
-        dragTextColor = attrs.getColor(
-            R.styleable.Kalendar_dragTextColor,
-            ContextCompat.getColor(context, R.color.drag_text_color)
-        )
-        dragTextSize = attrs.getDimensionPixelSize(R.styleable.Kalendar_dragTextSize, R.dimen.drag_text_size)
-        selectedDayDrawable = attrs.getResourceId(R.styleable.Kalendar_selectedDayDrawable, R.drawable.day_background)
-        attrs.recycle()
+    private fun obtainStylable(stylable: KalendarStylable) {
+        dragColor = stylable.dragColor
+        dragText = stylable.dragText
+        dragTextColor = stylable.dragTextColor
+        dragTextSize = stylable.dragTextSize
+        dragHeight = stylable.dragHeight
+        kalendarBackground = stylable.pageBackground
+        selectedDayDrawable = stylable.selectedDayDrawable
     }
 
     /**
@@ -154,6 +156,8 @@ class MonthPage(context: Context, attributeSet: AttributeSet? = null) : LinearLa
     fun expand() {
         moveManager.expand()
     }
+
+    fun getCurrentHeight() = if (isCollapsed) collapsedHeight else totalHeight
 
     /**
      * Method creates week with days inside
@@ -263,13 +267,13 @@ class MonthPage(context: Context, attributeSet: AttributeSet? = null) : LinearLa
 
     private fun selectDayAndSwitchMonth(date: Date) {
         if (moveManager.isInAction.not() && moveManager.isCollapsed.not()) {
-            if (date.time > dateManager.getCurrentDate().time) {
-                dateManager.goNextMonth(date)
-            } else {
-                dateManager.goPreviousMonth(date)
-            }
+//            if (date.time > dateManager.getCurrentDate().time) {
+//                dateManager.goNextMonth(date)
+//            } else {
+//                dateManager.goPreviousMonth(date)
+//            }
         } else {
-            dateManager.setCurrentDate(date)
+//            dateManager.setCurrentDate(date)
             actionQueue.add(KAction(ACTION_SELECT_DISABLED_DAY))
             moveManager.expand()
         }
@@ -308,11 +312,6 @@ class MonthPage(context: Context, attributeSet: AttributeSet? = null) : LinearLa
         }
     }
 
-    override fun onAttachedToWindow() {
-        super.onAttachedToWindow()
-        layoutParams = layoutParams.apply { height = WRAP_CONTENT }
-    }
-
     override fun onTouchEvent(event: MotionEvent) = moveManager.onTouch(event)
 
     override fun clearDate() {
@@ -338,12 +337,9 @@ class MonthPage(context: Context, attributeSet: AttributeSet? = null) : LinearLa
 
     fun makeWrapContent() {
         post {
-            var totHeight = 0
-            for (i in 0 until childCount) {
-                totHeight += getChildAt(i).height
-            }
-            this.layoutParams = this.layoutParams.apply { height = WRAP_CONTENT }
-            moveManager.setCurrentMaxHeight(totHeight)
+            calculateMeasuredHeight()
+            moveManager.setCurrentMaxHeight(totalHeight)
+            listener?.onSizeMeasured(this@MonthPage, collapsedHeight, totalHeight)
         }
     }
 
@@ -375,7 +371,6 @@ class MonthPage(context: Context, attributeSet: AttributeSet? = null) : LinearLa
             setTextColor(dragTextColor)
             textAlignment = View.TEXT_ALIGNMENT_CENTER
             setBackgroundColor(dragColor)
-            this.layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, dragHeight)
         })
         getChildAt(childCount - 1).layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, dragHeight).apply {
             gravity = Gravity.BOTTOM
@@ -390,11 +385,11 @@ class MonthPage(context: Context, attributeSet: AttributeSet? = null) : LinearLa
         addView(LinearLayout(context).apply {
             isClickable = true
             isFocusable = true
-
+            background = ContextCompat.getDrawable(context, R.drawable.ic_cell)
             setPadding(
-                resources.getDimension(R.dimen.small_padding).toInt(),
                 resources.getDimension(R.dimen.medium_padding).toInt(),
-                resources.getDimension(R.dimen.small_padding).toInt(),
+                resources.getDimension(R.dimen.medium_padding).toInt(),
+                resources.getDimension(R.dimen.medium_padding).toInt(),
                 resources.getDimension(R.dimen.medium_padding).toInt()
             )
 
@@ -407,6 +402,18 @@ class MonthPage(context: Context, attributeSet: AttributeSet? = null) : LinearLa
                 scrollMonth(true)
             })
         })
+    }
+
+    private fun calculateMeasuredHeight() {
+        val switchHeight = getChildAt(0).measuredHeight
+        val weekHeight = getWeekHeight()
+        collapsedHeight = switchHeight + weekHeight * 2 + dragHeight
+        totalHeight = switchHeight + (weekHeight * (childCount - 2)) + dragHeight
+        var weekBottom = switchHeight + weekHeight
+        for (i in 0 until childCount - 1) {
+            weekBottom += weekHeight
+            weekDefaultPositions.add(weekBottom.toFloat())
+        }
     }
 
     private fun createMonthDay(type: Int, label: String, clickListener: (() -> Unit)? = null): View? {
@@ -435,6 +442,7 @@ class MonthPage(context: Context, attributeSet: AttributeSet? = null) : LinearLa
 
     private fun createWeekDays() {
         addView(LinearLayout(context).apply {
+            background = ContextCompat.getDrawable(context, R.drawable.ic_cell_1_line)
             orientation = LinearLayout.HORIZONTAL
             isClickable = true
             isFocusable = true
@@ -459,9 +467,6 @@ class MonthPage(context: Context, attributeSet: AttributeSet? = null) : LinearLa
         }
 
     override fun setViewHeight(newBottom: Int) {
-        layoutParams = layoutParams.apply {
-            height = newBottom
-        }
         listener?.onHeightChanged(newBottom)
     }
 
@@ -487,12 +492,13 @@ class MonthPage(context: Context, attributeSet: AttributeSet? = null) : LinearLa
                         selectDay(dateManager.getCurrentDate())
                     }
                     ACTION_SELECT_DISABLED_DAY -> {
-                        selectDayAndSwitchMonth(dateManager.getCurrentDate())
+//                        selectDayAndSwitchMonth(dateManager.getCurrentDate())
                     }
                 }
                 actionQueue.remove(it)
             }
         }
+        isCollapsed = collapsed
         listener?.onStateChanged(collapsed)
     }
 
@@ -526,7 +532,7 @@ class MonthPage(context: Context, attributeSet: AttributeSet? = null) : LinearLa
 
     override fun getDragHeight() = dragHeight
 
-    override fun getBottomLimit() = y.toInt() + height
+    override fun getBottomLimit() = y.toInt() + totalHeight
 
     override fun getTopLimit() = getChildAt(WEEK_OFFSET).bottom
 
@@ -549,6 +555,8 @@ class MonthPage(context: Context, attributeSet: AttributeSet? = null) : LinearLa
 
     override fun getWeekHeight() = getChildAt(WEEK_OFFSET).height
 
+    override fun getDefaultPositions() = weekDefaultPositions
+
     override fun getWeekBottom(position: Int): Float {
         val week = getChildAt(position + WEEK_OFFSET)
         return week.y + week.height
@@ -567,6 +575,6 @@ class MonthPage(context: Context, attributeSet: AttributeSet? = null) : LinearLa
         fun onStateChanged(isCollapsed: Boolean)
         fun onHeightChanged(newHeight: Int)
         fun onMonthChanged(forward: Boolean)
+        fun onSizeMeasured(monthPage: MonthPage, collapsedHeight: Int, totalHeight: Int)
     }
-
 }

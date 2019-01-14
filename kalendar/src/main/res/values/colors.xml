@@ -5,4 +5,6 @@
 
     <color name="drag_text_color">#ffffff</color>
 
+    <color name="light_gray">#e8eef3</color>
+
 </resources>

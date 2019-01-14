@@ -5,59 +5,96 @@ import android.util.AttributeSet
 import android.view.View
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.FrameLayout
-import android.widget.LinearLayout
 import androidx.viewpager.widget.ViewPager
+import com.yalantis.kalendar.EMPTY_INT
 import com.yalantis.kalendar.MonthPagerAdapter
+import com.yalantis.kalendar.R
+import com.yalantis.kalendar.model.KalendarStylable
 import java.util.*
 
-class Kalendar(context: Context, val attributeSet: AttributeSet)
-    : FrameLayout(context, attributeSet), MonthPage.KalendarListener {
+class Kalendar(context: Context, val attributeSet: AttributeSet) : FrameLayout(context, attributeSet),
+    MonthPage.KalendarListener {
 
     private lateinit var viewPager: ViewPager
 
+    private var isFirstMonthInit = false
+
+    private lateinit var stylable: KalendarStylable
+
+    private var pagerColor = EMPTY_INT
+
     var changeListener: MonthPage.KalendarListener? = null
 
-    private val scrollListener = object : ViewPager.OnPageChangeListener {
-        override fun onPageScrollStateChanged(state: Int) {}
-        override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {}
+    private val scrollListener = object : ViewPager.SimpleOnPageChangeListener() {
         override fun onPageSelected(position: Int) {
             when (position) {
                 1 -> refreshAdapterFront()
                 viewPager.adapter?.count?.minus(2) -> refreshAdapterBack()
             }
+            makeWrapContent(position)
+        }
+    }
+
+    init {
+        parseStyledAttributes()
+        createView()
+    }
+
+    private fun makeWrapContent(position: Int) {
+        val adapter = viewPager.adapter as MonthPagerAdapter
+        val page = adapter.getPageAt(position)
+        viewPager.layoutParams = viewPager.layoutParams.apply {
+            this.height = page?.getCurrentHeight() ?: WRAP_CONTENT
         }
     }
 
     private fun refreshAdapterFront() {
-        val adapter = (viewPager.adapter as MonthPagerAdapter)
-        val startDate = adapter.getFirstDate()
-        val halfYear = createYear(startDate)
-        adapter.addMonths(halfYear)
+        val adapter = viewPager.adapter as MonthPagerAdapter
+        adapter.addToStart(monthsToStart())
         viewPager.currentItem = 7
     }
 
     private fun refreshAdapterBack() {
-        val adapter = (viewPager.adapter as MonthPagerAdapter)
-        val startDate = adapter.getLastDate()
-        val halfYear = createYear(startDate)
-        adapter.addMonths(halfYear)
-        viewPager.currentItem = 5
+        val adapter = viewPager.adapter as MonthPagerAdapter
+        val currentItem = viewPager.currentItem
+        adapter.addToEnd(monthsToEnd())
+        viewPager.currentItem = currentItem
     }
 
-    override fun onAttachedToWindow() {
-        super.onAttachedToWindow()
-        layoutParams = layoutParams.apply { this?.height = WRAP_CONTENT }
-        createView()
+    private fun monthsToStart(): List<Date> {
+        val adapter = viewPager.adapter as MonthPagerAdapter
+        val firstDate = adapter.getFirstDate()
+        val calendar = Calendar.getInstance()
+        calendar.time = firstDate
+        return (0 until 6).map {
+            calendar.add(Calendar.MONTH, -1)
+            calendar.time
+        }.toList()
+    }
+
+    private fun monthsToEnd(): List<Date> {
+        val adapter = viewPager.adapter as MonthPagerAdapter
+        val lastDate = adapter.getLastDate()
+        val calendar = Calendar.getInstance()
+        calendar.time = lastDate
+        return (0 until 6).map {
+            calendar.add(Calendar.MONTH, 1)
+            calendar.time
+        }.toList()
     }
 
     private fun createViewPager(): View? {
         viewPager = ViewPager(context).apply {
             id = View.generateViewId()
+            layoutParams = FrameLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT)
+            setBackgroundColor(pagerColor)
             addOnPageChangeListener(scrollListener)
-            adapter = MonthPagerAdapter(this@Kalendar, attributeSet).apply {
-                addMonths(createYear(Calendar.getInstance().time))
+            adapter = MonthPagerAdapter(this@Kalendar).apply {
+                stylable = this@Kalendar.stylable
+                setMonths(createYear(Calendar.getInstance().time))
             }
         }
+        viewPager.offscreenPageLimit = 2
         viewPager.currentItem = 6
         return viewPager
     }
@@ -91,10 +128,27 @@ class Kalendar(context: Context, val attributeSet: AttributeSet)
         }.toList()
     }
 
+
+    private fun parseStyledAttributes() {
+        stylable = KalendarStylable(context.obtainStyledAttributes(attributeSet, R.styleable.Kalendar))
+    }
+
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        layoutParams = layoutParams.apply { this.height = WRAP_CONTENT }
+    }
+
     private fun createView() {
-        addView(LinearLayout(context).apply {
-            addView(createViewPager())
-        })
+        addView(createViewPager())
+    }
+
+    override fun onSizeMeasured(monthPage: MonthPage, collapsedHeight: Int, totalHeight: Int) {
+        if (isFirstMonthInit.not()) {
+            isFirstMonthInit = true
+            makeWrapContent(6)
+        }
+        changeListener?.onSizeMeasured(monthPage, collapsedHeight, totalHeight)
     }
 
     override fun onDayClick(date: Date) {
@@ -106,7 +160,7 @@ class Kalendar(context: Context, val attributeSet: AttributeSet)
     }
 
     override fun onHeightChanged(newHeight: Int) {
-        layoutParams = layoutParams.apply { this?.height = newHeight }
+        viewPager.layoutParams = viewPager.layoutParams.apply { height = newHeight }
         changeListener?.onHeightChanged(newHeight)
     }
 
