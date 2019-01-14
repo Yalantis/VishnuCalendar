@@ -103,4 +103,10 @@ interface ViewProvider {
      */
 
     fun applyAlpha(week: Int, alpha: Float)
+
+    /**
+     * Request for weeks default positions
+     */
+
+    fun getDefaultPositions(): ArrayList<Float>
 }
