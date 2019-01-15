@@ -164,7 +164,7 @@ class MoveManagerImpl(private val viewProvider: ViewProvider) : MoveManager {
         var weekBottom: Float
 
         for (week in 0 until weeksAbove) {
-            weekTop = defaultPositions[week] - weekHeight
+            weekTop = defaultPositions[week] - weekHeight / 2
             weekBottom = defaultPositions[week]
 
             when {

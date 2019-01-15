@@ -2,7 +2,6 @@ package com.yalantis.kalendar.view
 
 import android.content.Context
 import android.util.AttributeSet
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.FrameLayout
@@ -162,6 +161,19 @@ class Kalendar(context: Context, val attributeSet: AttributeSet) : FrameLayout(c
      */
 
     fun getMonthAt(position: Int) = (viewPager.adapter as MonthPagerAdapter).getPageAt(position)
+
+    /**
+     * Method allow you to force swipe month
+     *
+     */
+
+    fun swipeMonth(isSwipeToEnd: Boolean) {
+        if (isSwipeToEnd) {
+            viewPager.arrowScroll(ViewPager.FOCUS_RIGHT)
+        } else {
+            viewPager.arrowScroll(ViewPager.FOCUS_LEFT)
+        }
+    }
 
     /**
      * Method allow you to get date from current selected page
