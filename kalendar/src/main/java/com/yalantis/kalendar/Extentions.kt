@@ -45,11 +45,6 @@ fun View.clicks(enabled: Boolean) {
     }
 }
 
-fun ViewGroup.applyTransition(block: () -> Unit) {
-    TransitionManager.beginDelayedTransition(this)
-    block.invoke()
-}
-
 fun Calendar.getDaysAfter() = when (this[DAY_OF_WEEK]) {
     Calendar.SATURDAY -> 0
     Calendar.FRIDAY -> 1

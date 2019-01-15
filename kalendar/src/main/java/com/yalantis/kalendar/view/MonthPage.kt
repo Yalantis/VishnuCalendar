@@ -26,7 +26,8 @@ import java.util.*
 import kotlin.collections.ArrayList
 
 @SuppressLint("ViewConstructor")
-class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(context), ViewProvider, Day.OnDayClickListener, DateView {
+class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(context), ViewProvider,
+    Day.OnDayClickListener, DateView {
 
     private var dragTextSize = EMPTY_INT
 
@@ -475,23 +476,21 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
         invisibleDaysClick(collapsed.not(), selectedWeek)
 
         actionQueue.firstOrNull()?.let {
-            applyTransition {
-                when (it.type) {
-                    ACTION_NEXT_MONTH -> {
-                        dateManager.goNextMonth()
-                    }
-                    ACTION_PREV_MONTH -> {
-                        dateManager.goPreviousMonth()
-                    }
-                    ACTION_SELECT_DAY -> {
-                        selectDay(dateManager.getCurrentDate())
-                    }
-                    ACTION_SELECT_DISABLED_DAY -> {
-                        selectDayAndSwitchMonth(dateManager.getCurrentDate())
-                    }
+            when (it.type) {
+                ACTION_NEXT_MONTH -> {
+                    dateManager.goNextMonth()
                 }
-                actionQueue.remove(it)
+                ACTION_PREV_MONTH -> {
+                    dateManager.goPreviousMonth()
+                }
+                ACTION_SELECT_DAY -> {
+                    selectDay(dateManager.getCurrentDate())
+                }
+                ACTION_SELECT_DISABLED_DAY -> {
+                    selectDayAndSwitchMonth(dateManager.getCurrentDate())
+                }
             }
+            actionQueue.remove(it)
         }
         isCollapsed = collapsed
         listener?.onStateChanged(collapsed)
