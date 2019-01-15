@@ -6,6 +6,7 @@
         <attr name="dragTextSize" format="dimension"/>
         <attr name="dragTextColor" format="color"/>
         <attr name="dragColor" format="color"/>
+        <attr name="pageBackground" format="color"/>
         <attr name="selectedDayDrawable" format="reference"/>
     </declare-styleable>
 

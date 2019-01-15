@@ -1,582 +1,334 @@
 package com.yalantis.kalendar.view
 
-import android.animation.LayoutTransition
 import android.content.Context
 import android.graphics.Typeface
 import android.util.AttributeSet
-import android.view.Gravity
-import android.view.MotionEvent
+import android.util.Log
 import android.view.View
-import android.view.ViewGroup
-import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-import android.widget.LinearLayout
-import android.widget.TextView
+import android.widget.FrameLayout
 import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
-import androidx.core.content.ContextCompat
-import com.yalantis.kalendar.*
-import com.yalantis.kalendar.implementation.DateManagerImpl
-import com.yalantis.kalendar.implementation.MoveManagerImpl
-import com.yalantis.kalendar.interfaces.DateManager
-import com.yalantis.kalendar.interfaces.DateView
-import com.yalantis.kalendar.interfaces.MoveManager
-import com.yalantis.kalendar.interfaces.ViewProvider
-import com.yalantis.kalendar.model.*
+import androidx.viewpager.widget.ViewPager
+import com.yalantis.kalendar.MonthPagerAdapter
+import com.yalantis.kalendar.PAGE_OFFSET
+import com.yalantis.kalendar.R
+import com.yalantis.kalendar.START_PAGE
+import com.yalantis.kalendar.model.KalendarStylable
 import java.util.*
 
-class Kalendar(context: Context, attributeSet: AttributeSet? = null) : LinearLayout(context, attributeSet),
-    ViewProvider, Day.OnDayClickListener, DateView {
+class Kalendar(context: Context, val attributeSet: AttributeSet) : FrameLayout(context, attributeSet),
+    MonthPage.KalendarListener {
 
-    private var dragTextSize = EMPTY_INT
+    private lateinit var viewPager: ViewPager
 
-    private var totalWidth = EMPTY_INT
+    private var isFirstMonthInit = false
 
-    private var totalHeight = EMPTY_INT
+    private lateinit var stylable: KalendarStylable
 
-    private var daySize = EMPTY_INT
+    private var previousPage = START_PAGE
 
-    private var previousSelectedDay: View? = null
+    private var currentMonth: MonthPage? = null
 
-    private var dragHeight = EMPTY_INT
+    var changeListener: MonthPage.KalendarListener? = null
 
-    private var dragText = EMPTY_STRING
-
-    private var isCreated = false
-
-    private val moveManager: MoveManager by lazy { MoveManagerImpl(this) }
-
-    private val dateManager: DateManager by lazy { DateManagerImpl(this) }
-
-    private val actionQueue = ArrayList<KAction>()
-
-    var listener: KalendarListener? = null
+    private val scrollListener = object : ViewPager.SimpleOnPageChangeListener() {
+        override fun onPageSelected(position: Int) {
+            when (position) {
+                1 -> refreshAdapterFront()
+                viewPager.adapter?.count?.minus(2) -> refreshAdapterBack()
+            }
+            makeWrapContent(position)
+            updateMonth(position)
+        }
+    }
 
     @DrawableRes
     var selectedDayDrawable: Int = R.drawable.day_background
         set(value) {
             field = value
-            invalidate()
+            stylable.selectedDayDrawable = value
         }
 
-
     @ColorRes
-    var dragColor = R.color.drag_color
+    var dragColor = R.color.light_gray
         set(value) {
             field = value
-            invalidate()
+            stylable.dragColor = value
         }
 
     @ColorRes
     var dragTextColor = R.color.drag_text_color
         set(value) {
             field = value
-            invalidate()
+            stylable.dragTextColor = value
         }
 
     var dayTypeface: Typeface = Typeface.MONOSPACE
         set(value) {
             field = value
-            invalidate()
+            stylable.dayTypeface = value
         }
 
-    var weekDayTypeface: Typeface = Typeface.MONOSPACE
+    var weekDayTypeface: Typeface = Typeface.DEFAULT
+        set(value) {
+            field = value
+            stylable.weekDayTypeface = value
+        }
 
     var monthTypeface: Typeface = Typeface.DEFAULT_BOLD
         set(value) {
             field = value
-            invalidate()
+            stylable.monthTypeface = value
         }
 
-    var kalendarBackground: Int = android.R.color.white
+    @DrawableRes
+    var monthSwitchBackground = R.drawable.ic_cell
         set(value) {
             field = value
-            setBackgroundResource(value)
-            invalidate()
+            stylable.monthSwitchBackground = value
         }
 
-    init {
-        layoutTransition = LayoutTransition()
-        obtainStylable(attributeSet)
+    @DrawableRes
+    var selectedWeekBackground = R.drawable.selected_week_back
+        set(value) {
+            field = value
+            stylable.selectedWeekBackground = value
+        }
+
+    @DrawableRes
+    var unselectedWeekBackground = R.drawable.unselected_week
+        set(value) {
+            field = value
+            stylable.unselectedWeekBackground = value
+        }
+
+    @DrawableRes
+    var weekDayNamesBackground = R.drawable.ic_cell_1_line
+        set(value) {
+            field = value
+            stylable.weekDayNamesBackground = value
+        }
+
+    private fun updateMonth(position: Int) {
+        when {
+            previousPage > position -> {
+                changeListener?.onMonthChanged(false)
+            }
+            previousPage < position -> {
+                changeListener?.onMonthChanged(true)
+            }
+        }
+        previousPage = position
     }
 
-    private fun obtainStylable(attributeSet: AttributeSet?) {
-        val attrs = context.obtainStyledAttributes(attributeSet, R.styleable.Kalendar)
-        dragHeight = attrs.getDimensionPixelSize(R.styleable.Kalendar_dragHeight, DEFAULT_DRAG_HEIGHT)
-        dragColor = attrs.getColor(R.styleable.Kalendar_dragColor, ContextCompat.getColor(context, R.color.drag_color))
-        dragText = attrs.getString(R.styleable.Kalendar_dragText) ?: EMPTY_STRING
-        dragTextColor = attrs.getColor(
-            R.styleable.Kalendar_dragTextColor,
-            ContextCompat.getColor(context, R.color.drag_text_color)
-        )
-        dragTextSize = attrs.getDimensionPixelSize(R.styleable.Kalendar_dragTextSize, R.dimen.drag_text_size)
-        selectedDayDrawable = attrs.getResourceId(R.styleable.Kalendar_selectedDayDrawable, R.drawable.day_background)
-        attrs.recycle()
+    init {
+        parseStyledAttributes()
+        createView()
     }
 
     /**
-     * Method allow you to force collapse view
+     * This method set view pager's size to wrap content on each page selection
+     */
+
+    private fun makeWrapContent(position: Int) {
+        val adapter = viewPager.adapter as MonthPagerAdapter
+        currentMonth= adapter.getPageAt(position)
+        viewPager.layoutParams = viewPager.layoutParams.apply {
+            this.height = currentMonth?.getCurrentHeight() ?: WRAP_CONTENT
+        }
+    }
+
+    /**
+     * This method add new months to view pager's adapter start
+     */
+
+    private fun refreshAdapterFront() {
+        val adapter = viewPager.adapter as MonthPagerAdapter
+        adapter.addToStart(monthsToStart())
+        viewPager.currentItem = START_PAGE + 1
+    }
+
+    /**
+     * This method add new months to view pager's adapter back
+     */
+
+    private fun refreshAdapterBack() {
+        val adapter = viewPager.adapter as MonthPagerAdapter
+        val currentItem = viewPager.currentItem
+        adapter.addToEnd(monthsToEnd())
+        viewPager.currentItem = currentItem
+    }
+
+    /**
+     * This method creates new months to view pager's adapter start
+     */
+
+    private fun monthsToStart(): List<Date> {
+        val adapter = viewPager.adapter as MonthPagerAdapter
+        val firstDate = adapter.getFirstDate()
+        val calendar = Calendar.getInstance()
+        calendar.time = firstDate
+        return (0 until 6).map {
+            calendar.add(Calendar.MONTH, -1)
+            calendar.time
+        }.toList()
+    }
+
+    /**
+     * This method creates new months to view pager's adapter back
+     */
+
+    private fun monthsToEnd(): List<Date> {
+        val adapter = viewPager.adapter as MonthPagerAdapter
+        val lastDate = adapter.getLastDate()
+        val calendar = Calendar.getInstance()
+        calendar.time = lastDate
+        return (0 until 6).map {
+            calendar.add(Calendar.MONTH, 1)
+            calendar.time
+        }.toList()
+    }
+
+    /**
+     * Initializing view pager for root view
+     */
+
+    private fun createViewPager(): View? {
+        viewPager = ViewPager(context).apply {
+            id = View.generateViewId()
+            layoutParams = FrameLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT)
+            addOnPageChangeListener(scrollListener)
+            adapter = MonthPagerAdapter(this@Kalendar).apply {
+                stylable = this@Kalendar.stylable
+                setMonths(createYear(Calendar.getInstance().time))
+            }
+        }
+        viewPager.offscreenPageLimit = PAGE_OFFSET
+        viewPager.currentItem = START_PAGE
+        return viewPager
+    }
+
+
+    /**
+     * Method allow you to force collapse current page
      */
 
     fun collapse() {
-        moveManager.collapse()
+        val currentPage = (viewPager.adapter as MonthPagerAdapter).getPageAt(viewPager.currentItem)
+        (currentPage as MonthPage).collapse()
     }
 
     /**
-     * Method allow you to force expand view
+     * Method allow you to force expand current page
      */
 
     fun expand() {
-        moveManager.expand()
-    }
-
-
-    /**
-     * Method allow you to set date and will display it
-     */
-
-    fun setDate(date: Date) {
-        dateManager.setDate(date)
+        val currentPage = (viewPager.adapter as MonthPagerAdapter).getPageAt(viewPager.currentItem)
+        (currentPage as MonthPage).expand()
     }
 
     /**
-     * Method allow you to change current month by one forward or backward
+     * Method allow you to get page by it position in adapter
+     *  Remember: adapter positions rewrites after view pager reach first position
      */
 
-    fun scrollMonth(forward: Boolean = true) {
-        if (moveManager.isCollapsed) {
-            if (forward) {
-                actionQueue.add(KAction((ACTION_NEXT_MONTH)))
-            } else {
-                actionQueue.add(KAction((ACTION_PREV_MONTH)))
-            }
-            moveManager.expand()
+    fun getMonthAt(position: Int) = (viewPager.adapter as MonthPagerAdapter).getPageAt(position)
+
+    /**
+     * Method allow you to force swipe month
+     *
+     */
+
+    fun swipeMonth(isSwipeToEnd: Boolean) {
+        if (isSwipeToEnd) {
+            viewPager.arrowScroll(ViewPager.FOCUS_RIGHT)
         } else {
-            applyTransition {
-                if (forward) {
-                    dateManager.goNextMonth()
-                } else {
-                    dateManager.goPreviousMonth()
-                }
-            }
+            viewPager.arrowScroll(ViewPager.FOCUS_LEFT)
         }
     }
 
     /**
-     * Method provide current selected date
+     * Method allow you to get date from current selected page
      */
 
-    fun getCurrentDate() = dateManager.getCurrentDate()
-
-    /**
-     * Method creates week with days inside
-     */
-
-    private fun createWeek(emptyDays: Int, emptyAtStart: Boolean): LinearLayout {
-        return LinearLayout(context).apply {
-            orientation = LinearLayout.HORIZONTAL
-            isClickable = true
-            isFocusable = true
-            background = ContextCompat.getDrawable(context, R.drawable.unselected_week)
-            attachDayToWeek(this, emptyAtStart, emptyDays)
-        }
+    fun getSelectedPageDate(): Date {
+        val currentPage = (viewPager.adapter as MonthPagerAdapter).getPageAt(viewPager.currentItem)
+        return (currentPage as MonthPage).getCurrentDate()
     }
 
     /**
-     * Method creates day and add it to the current creating week
+     * Method creates initial year, returns back on 7 month and iterate forward for 12 month
      */
 
-    private fun attachDayToWeek(week: LinearLayout, emptyAtStart: Boolean, emptyDays: Int) {
-        if (emptyAtStart) {
-            for (i in 0 until emptyDays) {
-                week.addView(createDay(true))
-                dateManager.addDay()
-            }
-            for (i in 1..DAYS_IN_WEEK - emptyDays) {
-                week.addView(createDay(false))
-                dateManager.addDay()
-            }
-        } else {
-            for (i in 1..DAYS_IN_WEEK - emptyDays) {
-                week.addView(createDay(false))
-                dateManager.addDay()
-            }
-            for (i in 0 until emptyDays) {
-                week.addView(createDay(true))
-                dateManager.addDay()
-            }
-        }
-    }
-
-    override fun selectDay(date: Date) {
-        var week: ViewGroup
-        var day: Day
-        for (i in WEEK_OFFSET until childCount) {
-            week = getChildAt(i) as ViewGroup
-            for (j in 0 until week.childCount) {
-                day = week.getChildAt(j) as Day
-                if (day.date == date) {
-                    post { applyDaySelection(day) }
-                    return
-                }
-            }
-        }
+    private fun createYear(from: Date): List<Date> {
+        val calendar = Calendar.getInstance()
+        calendar.time = from
+        calendar.add(Calendar.MONTH, -7)
+        return (0 until 12).map {
+            calendar.add(Calendar.MONTH, 1)
+            calendar.time
+        }.toList()
     }
 
     /**
-     * Method checks clicked day and make this day selected or post selection action in queue
+     * Method creates object with style attributes for each page
      */
 
-    private fun applyDaySelection(day: Day) {
-        if (previousSelectedDay != day) {
-            if (moveManager.isInAction.not() && moveManager.isCollapsed.not()) {
-                changeDayColors(day)
-                selectWeek(day)
-            } else {
-                actionQueue.add(KAction(ACTION_SELECT_DAY))
-                moveManager.expand()
-            }
-            dateManager.setCurrentDate(day.date)
-        }
+    private fun parseStyledAttributes() {
+        stylable = KalendarStylable(context.obtainStyledAttributes(attributeSet, R.styleable.Kalendar))
     }
 
-    /**
-     * Method creates day view which will be later displayed
-     */
-
-    private fun createDay(isEmpty: Boolean): TextView {
-        return Day(context).apply {
-            typeface = dayTypeface
-            labelColor = if (isEmpty) {
-                androidx.core.content.ContextCompat.getColor(context, android.R.color.darker_gray)
-            } else {
-                ContextCompat.getColor(context, android.R.color.background_dark)
-            }
-            canClick = isEmpty.not()
-            clickListener = this@Kalendar
-            label = dateManager.getDayLabel()
-            date = dateManager.getCurrentDate()
-            size(daySize, daySize)
-        }
-    }
-
-    override fun onNormalDayClick(day: Day) {
-        applyDaySelection(day)
-        listener?.onDayClick(day.date)
-    }
-
-    override fun onDisabledDayClick(day: Day) {
-        selectDayAndSwitchMonth(day.date)
-        listener?.onDayClick(day.date)
-    }
-
-    /**
-     * Method switch to the next or previous month and set date from the day as current
-     */
-
-    private fun selectDayAndSwitchMonth(date: Date) {
-        if (moveManager.isInAction.not() && moveManager.isCollapsed.not()) {
-            if (date.time > dateManager.getCurrentDate().time) {
-                dateManager.goNextMonth(date)
-            } else {
-                dateManager.goPreviousMonth(date)
-            }
-        } else {
-            dateManager.setCurrentDate(date)
-            actionQueue.add(KAction(ACTION_SELECT_DISABLED_DAY))
-            moveManager.expand()
-        }
-    }
-
-    /**
-     * Method selects week which will not be collapsed
-     */
-
-    private fun selectWeek(selectedDay: View?) {
-        selectedDay?.let {
-            val parent = it.parent as View
-            parent.setBackgroundResource(R.drawable.selected_week_back)
-            val selectedWeek = indexOfChild(parent) - WEEK_OFFSET
-            moveManager.selectWeek(selectedWeek)
-        }
-    }
-
-    /**
-     * Method change unselected day color to selected day color
-     */
-
-    private fun changeDayColors(newSelectedDay: View?) {
-        newSelectedDay?.setBackgroundResource(selectedDayDrawable)
-        previousSelectedDay?.background = null
-        previousSelectedDay = newSelectedDay
-    }
-
-    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
-        super.onLayout(changed, left, top, right, bottom)
-        if (isCreated.not()) {
-            calculateBounds(left, top, right, bottom)
-            setBackgroundResource(android.R.color.white)
-            setDate(dateManager.getCurrentDate())
-            isCreated = true
-        }
-    }
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        layoutParams = layoutParams.apply { height = WRAP_CONTENT }
-    }
-
-    override fun onTouchEvent(event: MotionEvent) = moveManager.onTouch(event)
-
-    override fun clearDate() {
-        removeAllViews()
+        layoutParams = layoutParams.apply { this.height = WRAP_CONTENT }
     }
 
     /**
-     * Method creates whole view hierarchy
+     * Method creates view pager as child of root element
      */
 
-    private fun createContent(daysBefore: Int, daysNormal: Int, daysAfter: Int) {
-        orientation = VERTICAL
-        createMonthSwitch()
-        createWeekDays()
-        createWeeks(daysBefore, daysNormal, daysAfter)
-        createDragView()
-        makeWrapContent()
+    private fun createView() {
+        addView(createViewPager())
     }
 
-    /**
-     * Method makes root view height as wrap content
-     */
-
-    private fun makeWrapContent() {
-        post {
-            var totHeight = 0
-            for (i in 0 until childCount) {
-                totHeight += getChildAt(i).height
-            }
-            this.layoutParams = this.layoutParams.apply { height = WRAP_CONTENT }
-            moveManager.setCurrentMaxHeight(totHeight)
+    override fun onSizeMeasured(monthPage: MonthPage, collapsedHeight: Int, totalHeight: Int) {
+        if (isFirstMonthInit.not()) {
+            isFirstMonthInit = true
+            makeWrapContent(6)
         }
+        changeListener?.onSizeMeasured(monthPage, collapsedHeight, totalHeight)
     }
 
-    /**
-     * Method calculates total weeks amount and creates weeks depends on calculated count
-     */
-
-    private fun createWeeks(daysBefore: Int, daysNormal: Int, daysAfter: Int) {
-        val totalDays = daysBefore + daysAfter + daysNormal
-        val weeksAmount = totalDays / DAYS_IN_WEEK
-        for (i in 1..weeksAmount) {
-            when (i) {
-                1 -> addView(createWeek(daysBefore, true))
-                weeksAmount -> addView(createWeek(daysAfter, false))
-                else -> addView(createWeek(0, false))
-            }
-        }
+    override fun onDayClick(date: Date) {
+        changeListener?.onDayClick(date)
+        Log.e("TAG", date.toString())
     }
 
-
-    /**
-     * Method creates view at the bottom of root view
-     */
-
-    private fun createDragView() {
-        addView(TextView(context).apply {
-            text = dragText
-            textSize = dragTextSize.toFloat()
-            setTextColor(dragTextColor)
-            textAlignment = View.TEXT_ALIGNMENT_CENTER
-            setBackgroundColor(dragColor)
-            this.layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, dragHeight)
-        })
-        getChildAt(childCount - 1).layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, dragHeight).apply {
-            gravity = Gravity.BOTTOM
-        }
+    override fun onStateChanged(isCollapsed: Boolean) {
+        changeListener?.onStateChanged(isCollapsed)
     }
 
-    /**
-     * Method creates days which able to switch month and implements month switch logic
-     */
-
-    private fun createMonthSwitch() {
-        addView(LinearLayout(context).apply {
-            isClickable = true
-            isFocusable = true
-
-            setPadding(
-                resources.getDimension(R.dimen.small_padding).toInt(),
-                resources.getDimension(R.dimen.medium_padding).toInt(),
-                resources.getDimension(R.dimen.small_padding).toInt(),
-                resources.getDimension(R.dimen.medium_padding).toInt()
-            )
-
-            addView(createMonthDay(Month.TYPE_LEFT, dateManager.getPreviousMonthLabel()) {
-                scrollMonth(false)
-            })
-            addView(createMonthDay(Month.TYPE_MID, dateManager.getCurrentMonthLabel()))
-
-            addView(createMonthDay(Month.TYPE_RIGHT, dateManager.getNextMonthLabel()) {
-                scrollMonth(true)
-            })
-        })
+    override fun onHeightChanged(newHeight: Int) {
+        viewPager.layoutParams = viewPager.layoutParams.apply { height = newHeight }
+        changeListener?.onHeightChanged(newHeight)
     }
 
-    private fun createMonthDay(type: Int, label: String, clickListener: (() -> Unit)? = null): View? {
-        return Month(context).apply {
-            this.type = type
-            this.label = label
-            typeface = monthTypeface
-            textSize = DEFAULT_DAY_TEXT_SIZE
-            click = clickListener
-        }
-    }
+    override fun onMonthChanged(forward: Boolean, date: Date?) {
+        val adapter = (viewPager.adapter as MonthPagerAdapter)
 
-    /**
-     * Method calculates total root size
-     */
-
-    private fun calculateBounds(left: Int, top: Int, right: Int, bottom: Int) {
-        totalWidth = right - left
-        totalHeight = bottom - top
-        daySize = totalWidth / DAYS_IN_WEEK
-    }
-
-    /**
-     * Method creates week day names container
-     */
-
-    private fun createWeekDays() {
-        addView(LinearLayout(context).apply {
-            orientation = LinearLayout.HORIZONTAL
-            isClickable = true
-            isFocusable = true
-            for (i in DAYS_IN_WEEK_RANGE) {
-                addView(createWeekDay(dateManager.getWeekDayName(i)))
-            }
-        })
-    }
-
-    /**
-     * Method creates week day name
-     */
-
-    private fun createWeekDay(label: String) =
-        TextView(context).apply {
-            text = label
-            typeface = weekDayTypeface
-            gravity = Gravity.CENTER
-            textAlignment = TextView.TEXT_ALIGNMENT_GRAVITY
-            setTextColor(ContextCompat.getColor(context, android.R.color.background_dark))
-            layoutParams = LinearLayout.LayoutParams(daySize, daySize)
+        val page = if (forward) {
+            viewPager.arrowScroll(ViewPager.FOCUS_RIGHT)
+            adapter.getPageAt(viewPager.currentItem)
+        } else {
+            viewPager.arrowScroll(ViewPager.FOCUS_LEFT)
+            adapter.getPageAt(viewPager.currentItem)
         }
 
-    override fun setViewHeight(newBottom: Int) {
-        layoutParams = layoutParams.apply {
-            height = newBottom
-        }
-    }
+        date?.let { page?.selectDay(it) }
 
-    override fun displayDate(emptyBefore: Int, normal: Int, emptyAfter: Int) {
-        createContent(emptyBefore, normal, emptyAfter)
-    }
-
-
-    override fun moveStateChanged(collapsed: Boolean, selectedWeek: Int) {
-
-        invisibleDaysClick(collapsed.not(), selectedWeek)
-
-        actionQueue.firstOrNull()?.let {
-            applyTransition {
-                when (it.type) {
-                    ACTION_NEXT_MONTH -> {
-                        dateManager.goNextMonth()
-                    }
-                    ACTION_PREV_MONTH -> {
-                        dateManager.goPreviousMonth()
-                    }
-                    ACTION_SELECT_DAY -> {
-                        selectDay(dateManager.getCurrentDate())
-                    }
-                    ACTION_SELECT_DISABLED_DAY -> {
-                        selectDayAndSwitchMonth(dateManager.getCurrentDate())
-                    }
-                }
-                actionQueue.remove(it)
-            }
-        }
-        listener?.onStateChanged(collapsed)
-    }
-
-    /**
-     * Method make collapsed weeks inactive
-     */
-
-    private fun invisibleDaysClick(enabled: Boolean, selectedWeek: Int) {
-
-        var weekView: ViewGroup
-        val displayingWeek = selectedWeek + WEEK_OFFSET
-
-        for (week in WEEK_OFFSET until childCount - 1) {
-            if (week != displayingWeek) {
-                weekView = getChildAt(week) as ViewGroup
-                weekView.clicks(enabled)
-                for (day in DAYS_IN_WEEK_RANGE) {
-                    weekView.getChildAt(day).clicks(enabled)
-                }
-            }
-        }
-    }
-
-    override fun applyAlpha(week: Int, alpha: Float) {
-        getChildAt(week + WEEK_OFFSET).alpha = alpha
-    }
-
-    override fun getViewTotalHeight() = layoutParams.height
-
-    override fun getViewTop() = top
-
-    override fun getDragHeight() = dragHeight
-
-    override fun getBottomLimit() = y.toInt() + height
-
-    override fun getTopLimit() = getChildAt(WEEK_OFFSET).bottom
-
-    override fun viewMinHeight() =
-        getChildAt(0).height + getChildAt(1).height + getChildAt(2).height
-
-
-    override fun getWeekCount() = childCount - WEEK_OFFSET - 1 // -1 cuz dragView
-
-    override fun setDragTop(newDragTop: Float) {
-        getChildAt(childCount - 1).y = newDragTop
-    }
-
-    override fun setWeekHeight(i: Int, weekHeight: Int) {
-        val week = getChildAt(i)
-        week.layoutParams = week.layoutParams.apply { height = weekHeight }
-    }
-
-    override fun getDragTop() = getChildAt(childCount - 1).y
-
-    override fun getWeekHeight() = getChildAt(WEEK_OFFSET).height
-
-    override fun getWeekBottom(position: Int): Float {
-        val week = getChildAt(position + WEEK_OFFSET)
-        return week.y + week.height
-    }
-
-    override fun getWeekTop(position: Int) = getChildAt(position).y
-
-    override fun moveWeek(position: Int, newTop: Float) {
-        val week = getChildAt(position + WEEK_OFFSET)
-        week.y = newTop - week.height
-        week.layoutParams = week.layoutParams.apply { height = week.height }
-    }
-
-    interface KalendarListener {
-        fun onDayClick(date: Date)
-        fun onStateChanged(isCollapsed: Boolean)
+        changeListener?.onMonthChanged(forward, date)
     }
 
 }

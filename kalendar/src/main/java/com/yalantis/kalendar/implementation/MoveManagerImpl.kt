@@ -49,7 +49,7 @@ class MoveManagerImpl(private val viewProvider: ViewProvider) : MoveManager {
 
     private var selectedWeek = EMPTY_INT
 
-    private val defaultPositions = ArrayList<Float>()
+    private var defaultPositions = ArrayList<Float>()
 
     override fun onTouch(event: MotionEvent): Boolean {
         return when (event.action) {
@@ -90,7 +90,7 @@ class MoveManagerImpl(private val viewProvider: ViewProvider) : MoveManager {
 
     override fun expand() {
         val anim = ValueAnimator
-            .ofFloat(viewProvider.getDragTop(), bottomLimit + dragHeight.toFloat())
+            .ofFloat(viewProvider.getDragTop(), bottomLimit.toFloat() - dragHeight)
             .setDuration(KALENDAR_SPEED)
         anim.interpolator = DecelerateInterpolator()
         anim.addUpdateListener {
@@ -164,7 +164,7 @@ class MoveManagerImpl(private val viewProvider: ViewProvider) : MoveManager {
         var weekBottom: Float
 
         for (week in 0 until weeksAbove) {
-            weekTop = defaultPositions[week] - weekHeight
+            weekTop = defaultPositions[week] - weekHeight / 2
             weekBottom = defaultPositions[week]
 
             when {
@@ -204,7 +204,7 @@ class MoveManagerImpl(private val viewProvider: ViewProvider) : MoveManager {
     }
 
     /**
-     *  Method move week depends on current and touch positions
+     *  Method moves week depends on touch position
      */
 
     private fun moveWeek(which: Int, weekBottom: Float, touchY: Float, defaultPosition: Float) {
@@ -234,13 +234,6 @@ class MoveManagerImpl(private val viewProvider: ViewProvider) : MoveManager {
     override fun selectWeek(selectedWeek: Int) {
         this.selectedWeek = selectedWeek
         this.weekCount = viewProvider.getWeekCount()
-        refreshDefaultPositions()
-    }
-
-    private fun refreshDefaultPositions() {
-        //weeks 0-5 (if displayed 6)
-        for (i in 0 until weekCount) {
-            defaultPositions.add(viewProvider.getWeekBottom(i))
-        }
+        defaultPositions = viewProvider.getDefaultPositions()
     }
 }
