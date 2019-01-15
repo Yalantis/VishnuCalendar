@@ -129,6 +129,7 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
             invalidate()
         }
 
+    @ColorRes
     var kalendarBackground: Int = android.R.color.white
         set(value) {
             field = value
@@ -345,7 +346,7 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
         super.onLayout(changed, left, top, right, bottom)
         if (isCreated.not()) {
             calculateBounds(left, top, right, bottom)
-            setBackgroundResource(kalendarBackground)
+            setBackgroundColor(kalendarBackground)
             setDate(pageDate)
             isCreated = true
         }
@@ -460,7 +461,7 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
             this.type = type
             this.label = label
             typeface = monthTypeface
-            textSize = DEFAULT_DAY_TEXT_SIZE
+            textSize = resources.getDimension(R.dimen.default_day_text_size)
             click = clickListener
         }
     }
