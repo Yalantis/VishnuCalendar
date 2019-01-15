@@ -1,8 +1,6 @@
 package com.yalantis.kalendar
 
-import android.transition.TransitionManager
 import android.view.View
-import android.view.ViewGroup
 import java.util.*
 import java.util.Calendar.DAY_OF_WEEK
 import java.util.Calendar.MONTH
@@ -21,7 +19,9 @@ const val HIDE_MULTIPLIER = 2.5f
 
 const val EMPTY_STRING = ""
 
-const val DEFAULT_DRAG_HEIGHT = 20
+const val START_PAGE = 6
+
+const val PAGE_OFFSET = 2
 
 const val KALENDAR_SPEED = 500L
 
@@ -41,11 +41,6 @@ fun View.clicks(enabled: Boolean) {
         isClickable = false
         isFocusable = false
     }
-}
-
-fun ViewGroup.applyTransition(block: () -> Unit) {
-    TransitionManager.beginDelayedTransition(this)
-    block.invoke()
 }
 
 fun Calendar.getDaysAfter() = when (this[DAY_OF_WEEK]) {
@@ -72,7 +67,7 @@ fun Calendar.getDaysBefore() = when (this[DAY_OF_WEEK]) {
 
 fun Calendar.previousMonthName(): String {
     this.add(Calendar.MONTH, -1)
-    val pre = this.getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.getDefault())
+    val pre = this.getDisplayName(Calendar.MONTH, Calendar.SHORT, Locale.getDefault())
     this.add(MONTH, 1)
     return pre
 }
@@ -81,7 +76,7 @@ fun Calendar.currentMonthName(): String = getDisplayName(Calendar.MONTH, Calenda
 
 fun Calendar.nextMonthName(): String {
     this.add(Calendar.MONTH, 1)
-    val next = this.getDisplayName(Calendar.MONTH, Calendar.LONG, Locale.getDefault())
+    val next = this.getDisplayName(Calendar.MONTH, Calendar.SHORT, Locale.getDefault())
     this.add(Calendar.MONTH, -1)
     return next
 }

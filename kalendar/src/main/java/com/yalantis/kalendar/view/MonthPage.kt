@@ -26,7 +26,8 @@ import java.util.*
 import kotlin.collections.ArrayList
 
 @SuppressLint("ViewConstructor")
-class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(context), ViewProvider, Day.OnDayClickListener, DateView {
+class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(context), ViewProvider,
+    Day.OnDayClickListener, DateView {
 
     private var dragTextSize = EMPTY_INT
 
@@ -69,7 +70,7 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
 
 
     @ColorRes
-    var dragColor = R.color.drag_color
+    var dragColor = R.color.light_gray
         set(value) {
             field = value
             invalidate()
@@ -89,6 +90,10 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
         }
 
     var weekDayTypeface: Typeface = Typeface.DEFAULT
+        set(value) {
+            field = value
+            invalidate()
+        }
 
     var monthTypeface: Typeface = Typeface.DEFAULT_BOLD
         set(value) {
@@ -96,10 +101,38 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
             invalidate()
         }
 
+    @DrawableRes
+    var monthSwitchBackground = R.drawable.ic_cell
+        set(value) {
+            field = value
+            invalidate()
+        }
+
+    @DrawableRes
+    var selectedWeekBackground = R.drawable.selected_week_back
+        set(value) {
+            field = value
+            invalidate()
+        }
+
+    @DrawableRes
+    var unselectedWeekBackground = R.drawable.unselected_week
+        set(value) {
+            field = value
+            invalidate()
+        }
+
+    @DrawableRes
+    var weekDayNamesBackground = R.drawable.ic_cell_1_line
+        set(value) {
+            field = value
+            invalidate()
+        }
+
+    @ColorRes
     var kalendarBackground: Int = android.R.color.white
         set(value) {
             field = value
-            setBackgroundColor(value)
             invalidate()
         }
 
@@ -109,13 +142,21 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
     }
 
     private fun obtainStylable(stylable: KalendarStylable) {
-        dragColor = stylable.dragColor
-        dragText = stylable.dragText
-        dragTextColor = stylable.dragTextColor
-        dragTextSize = stylable.dragTextSize
-        dragHeight = stylable.dragHeight
-        kalendarBackground = stylable.pageBackground
-        selectedDayDrawable = stylable.selectedDayDrawable
+        dragText                  = stylable.dragText
+        dragColor                 = stylable.dragColor
+        dragHeight                = stylable.dragHeight
+        dayTypeface               = stylable.dayTypeface
+        dragTextSize              = stylable.dragTextSize
+        dragTextColor             = stylable.dragTextColor
+        monthTypeface             = stylable.monthTypeface
+        weekDayTypeface           = stylable.weekDayTypeface
+        kalendarBackground        = stylable.pageBackground
+        selectedDayDrawable       = stylable.selectedDayDrawable
+        monthSwitchBackground     = stylable.monthSwitchBackground
+        weekDayNamesBackground    = stylable.weekDayNamesBackground
+        selectedWeekBackground    = stylable.selectedWeekBackground
+        unselectedWeekBackground  = stylable.unselectedWeekBackground
+
     }
 
     /**
@@ -129,10 +170,6 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
     override fun onVisibilityAggregated(isVisible: Boolean) {
         super.onVisibilityAggregated(isVisible)
         if (isVisible) makeWrapContent()
-    }
-
-    fun scrollMonth(forward: Boolean = true) {
-        listener?.onMonthChanged(forward)
     }
 
     /**
@@ -157,6 +194,10 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
         moveManager.expand()
     }
 
+    /**
+     * Method return current height depend on state
+     */
+
     fun getCurrentHeight() = if (isCollapsed) collapsedHeight else totalHeight
 
     /**
@@ -168,7 +209,7 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
             orientation = LinearLayout.HORIZONTAL
             isClickable = true
             isFocusable = true
-            background = ContextCompat.getDrawable(context, R.drawable.unselected_week)
+            background = ContextCompat.getDrawable(context, unselectedWeekBackground)
             attachDayToWeek(this, emptyAtStart, emptyDays)
         }
     }
@@ -267,13 +308,12 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
 
     private fun selectDayAndSwitchMonth(date: Date) {
         if (moveManager.isInAction.not() && moveManager.isCollapsed.not()) {
-//            if (date.time > dateManager.getCurrentDate().time) {
-//                dateManager.goNextMonth(date)
-//            } else {
-//                dateManager.goPreviousMonth(date)
-//            }
+            if (dateManager.getCurrentDate().time > date.time) {
+                listener?.onMonthChanged(false, date)
+            } else {
+                listener?.onMonthChanged(true, date)
+            }
         } else {
-//            dateManager.setCurrentDate(date)
             actionQueue.add(KAction(ACTION_SELECT_DISABLED_DAY))
             moveManager.expand()
         }
@@ -286,7 +326,7 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
     private fun selectWeek(selectedDay: View?) {
         selectedDay?.let {
             val parent = it.parent as View
-            parent.setBackgroundResource(R.drawable.selected_week_back)
+            parent.setBackgroundResource(selectedWeekBackground)
             val selectedWeek = indexOfChild(parent) - WEEK_OFFSET
             moveManager.selectWeek(selectedWeek)
         }
@@ -306,7 +346,7 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
         super.onLayout(changed, left, top, right, bottom)
         if (isCreated.not()) {
             calculateBounds(left, top, right, bottom)
-            setBackgroundResource(android.R.color.white)
+            setBackgroundColor(kalendarBackground)
             setDate(pageDate)
             isCreated = true
         }
@@ -385,7 +425,7 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
         addView(LinearLayout(context).apply {
             isClickable = true
             isFocusable = true
-            background = ContextCompat.getDrawable(context, R.drawable.ic_cell)
+            background = ContextCompat.getDrawable(context, monthSwitchBackground)
             setPadding(
                 resources.getDimension(R.dimen.medium_padding).toInt(),
                 resources.getDimension(R.dimen.medium_padding).toInt(),
@@ -394,12 +434,12 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
             )
 
             addView(createMonthDay(Month.TYPE_LEFT, dateManager.getPreviousMonthLabel()) {
-                scrollMonth(false)
+                listener?.onMonthChanged(false)
             })
             addView(createMonthDay(Month.TYPE_MID, dateManager.getCurrentMonthLabel()))
 
             addView(createMonthDay(Month.TYPE_RIGHT, dateManager.getNextMonthLabel()) {
-                scrollMonth(true)
+                listener?.onMonthChanged(true)
             })
         })
     }
@@ -421,7 +461,7 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
             this.type = type
             this.label = label
             typeface = monthTypeface
-            textSize = DEFAULT_DAY_TEXT_SIZE
+            textSize = resources.getDimension(R.dimen.default_day_text_size)
             click = clickListener
         }
     }
@@ -442,7 +482,7 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
 
     private fun createWeekDays() {
         addView(LinearLayout(context).apply {
-            background = ContextCompat.getDrawable(context, R.drawable.ic_cell_1_line)
+            background = ContextCompat.getDrawable(context, weekDayNamesBackground)
             orientation = LinearLayout.HORIZONTAL
             isClickable = true
             isFocusable = true
@@ -480,23 +520,21 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
         invisibleDaysClick(collapsed.not(), selectedWeek)
 
         actionQueue.firstOrNull()?.let {
-            applyTransition {
-                when (it.type) {
-                    ACTION_NEXT_MONTH -> {
-                        dateManager.goNextMonth()
-                    }
-                    ACTION_PREV_MONTH -> {
-                        dateManager.goPreviousMonth()
-                    }
-                    ACTION_SELECT_DAY -> {
-                        selectDay(dateManager.getCurrentDate())
-                    }
-                    ACTION_SELECT_DISABLED_DAY -> {
-//                        selectDayAndSwitchMonth(dateManager.getCurrentDate())
-                    }
+            when (it.type) {
+                ACTION_NEXT_MONTH -> {
+                    dateManager.goNextMonth()
                 }
-                actionQueue.remove(it)
+                ACTION_PREV_MONTH -> {
+                    dateManager.goPreviousMonth()
+                }
+                ACTION_SELECT_DAY -> {
+                    selectDay(dateManager.getCurrentDate())
+                }
+                ACTION_SELECT_DISABLED_DAY -> {
+                    selectDayAndSwitchMonth(dateManager.getCurrentDate())
+                }
             }
+            actionQueue.remove(it)
         }
         isCollapsed = collapsed
         listener?.onStateChanged(collapsed)
@@ -571,10 +609,33 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
     }
 
     interface KalendarListener {
+        /**
+         * Invokes when user clicks on current page day view
+         */
         fun onDayClick(date: Date)
+
+        /**
+         * Invokes when current page collapsed/expanded state changed
+         */
+
         fun onStateChanged(isCollapsed: Boolean)
+
+        /**
+         * Invokes when current page height changed
+         */
+
         fun onHeightChanged(newHeight: Int)
-        fun onMonthChanged(forward: Boolean)
+
+        /**
+         * Invokes when clicks on next/previous month
+         */
+
+        fun onMonthChanged(forward: Boolean, date: Date? = null)
+
+        /**
+         * Invokes when current page size has been measured
+         */
+
         fun onSizeMeasured(monthPage: MonthPage, collapsedHeight: Int, totalHeight: Int)
     }
 }
