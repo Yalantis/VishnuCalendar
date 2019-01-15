@@ -90,8 +90,40 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
         }
 
     var weekDayTypeface: Typeface = Typeface.DEFAULT
+        set(value) {
+            field = value
+            invalidate()
+        }
 
     var monthTypeface: Typeface = Typeface.DEFAULT_BOLD
+        set(value) {
+            field = value
+            invalidate()
+        }
+
+    @DrawableRes
+    var monthSwitchBackground = R.drawable.ic_cell
+        set(value) {
+            field = value
+            invalidate()
+        }
+
+    @DrawableRes
+    var selectedWeekBackground = R.drawable.selected_week_back
+        set(value) {
+            field = value
+            invalidate()
+        }
+
+    @DrawableRes
+    var unselectedWeekBackground = R.drawable.unselected_week
+        set(value) {
+            field = value
+            invalidate()
+        }
+
+    @DrawableRes
+    var weekDayNamesBackground = R.drawable.ic_cell_1_line
         set(value) {
             field = value
             invalidate()
@@ -100,7 +132,6 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
     var kalendarBackground: Int = android.R.color.white
         set(value) {
             field = value
-            setBackgroundColor(value)
             invalidate()
         }
 
@@ -110,13 +141,21 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
     }
 
     private fun obtainStylable(stylable: KalendarStylable) {
-        dragColor = stylable.dragColor
-        dragText = stylable.dragText
-        dragTextColor = stylable.dragTextColor
-        dragTextSize = stylable.dragTextSize
-        dragHeight = stylable.dragHeight
-        kalendarBackground = stylable.pageBackground
-        selectedDayDrawable = stylable.selectedDayDrawable
+        dragText                  = stylable.dragText
+        dragColor                 = stylable.dragColor
+        dragHeight                = stylable.dragHeight
+        dayTypeface               = stylable.dayTypeface
+        dragTextSize              = stylable.dragTextSize
+        dragTextColor             = stylable.dragTextColor
+        monthTypeface             = stylable.monthTypeface
+        weekDayTypeface           = stylable.weekDayTypeface
+        kalendarBackground        = stylable.pageBackground
+        selectedDayDrawable       = stylable.selectedDayDrawable
+        monthSwitchBackground     = stylable.monthSwitchBackground
+        weekDayNamesBackground    = stylable.weekDayNamesBackground
+        selectedWeekBackground    = stylable.selectedWeekBackground
+        unselectedWeekBackground  = stylable.unselectedWeekBackground
+
     }
 
     /**
@@ -154,6 +193,10 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
         moveManager.expand()
     }
 
+    /**
+     * Method return current height depend on state
+     */
+
     fun getCurrentHeight() = if (isCollapsed) collapsedHeight else totalHeight
 
     /**
@@ -165,7 +208,7 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
             orientation = LinearLayout.HORIZONTAL
             isClickable = true
             isFocusable = true
-            background = ContextCompat.getDrawable(context, R.drawable.unselected_week)
+            background = ContextCompat.getDrawable(context, unselectedWeekBackground)
             attachDayToWeek(this, emptyAtStart, emptyDays)
         }
     }
@@ -282,7 +325,7 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
     private fun selectWeek(selectedDay: View?) {
         selectedDay?.let {
             val parent = it.parent as View
-            parent.setBackgroundResource(R.drawable.selected_week_back)
+            parent.setBackgroundResource(selectedWeekBackground)
             val selectedWeek = indexOfChild(parent) - WEEK_OFFSET
             moveManager.selectWeek(selectedWeek)
         }
@@ -302,7 +345,7 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
         super.onLayout(changed, left, top, right, bottom)
         if (isCreated.not()) {
             calculateBounds(left, top, right, bottom)
-            setBackgroundResource(android.R.color.white)
+            setBackgroundResource(kalendarBackground)
             setDate(pageDate)
             isCreated = true
         }
@@ -381,7 +424,7 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
         addView(LinearLayout(context).apply {
             isClickable = true
             isFocusable = true
-            background = ContextCompat.getDrawable(context, R.drawable.ic_cell)
+            background = ContextCompat.getDrawable(context, monthSwitchBackground)
             setPadding(
                 resources.getDimension(R.dimen.medium_padding).toInt(),
                 resources.getDimension(R.dimen.medium_padding).toInt(),
@@ -438,7 +481,7 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
 
     private fun createWeekDays() {
         addView(LinearLayout(context).apply {
-            background = ContextCompat.getDrawable(context, R.drawable.ic_cell_1_line)
+            background = ContextCompat.getDrawable(context, weekDayNamesBackground)
             orientation = LinearLayout.HORIZONTAL
             isClickable = true
             isFocusable = true

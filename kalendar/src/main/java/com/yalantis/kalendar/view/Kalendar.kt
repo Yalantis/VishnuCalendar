@@ -1,12 +1,19 @@
 package com.yalantis.kalendar.view
 
 import android.content.Context
+import android.graphics.Typeface
 import android.util.AttributeSet
+import android.util.Log
 import android.view.View
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.FrameLayout
+import androidx.annotation.ColorRes
+import androidx.annotation.DrawableRes
 import androidx.viewpager.widget.ViewPager
-import com.yalantis.kalendar.*
+import com.yalantis.kalendar.MonthPagerAdapter
+import com.yalantis.kalendar.PAGE_OFFSET
+import com.yalantis.kalendar.R
+import com.yalantis.kalendar.START_PAGE
 import com.yalantis.kalendar.model.KalendarStylable
 import java.util.*
 
@@ -19,9 +26,9 @@ class Kalendar(context: Context, val attributeSet: AttributeSet) : FrameLayout(c
 
     private lateinit var stylable: KalendarStylable
 
-    private var pagerColor = EMPTY_INT
-
     private var previousPage = START_PAGE
+
+    private var currentMonth: MonthPage? = null
 
     var changeListener: MonthPage.KalendarListener? = null
 
@@ -35,6 +42,73 @@ class Kalendar(context: Context, val attributeSet: AttributeSet) : FrameLayout(c
             updateMonth(position)
         }
     }
+
+    @DrawableRes
+    var selectedDayDrawable: Int = R.drawable.day_background
+        set(value) {
+            field = value
+            stylable.selectedDayDrawable = value
+        }
+
+    @ColorRes
+    var dragColor = R.color.light_gray
+        set(value) {
+            field = value
+            stylable.dragColor = value
+        }
+
+    @ColorRes
+    var dragTextColor = R.color.drag_text_color
+        set(value) {
+            field = value
+            stylable.dragTextColor = value
+        }
+
+    var dayTypeface: Typeface = Typeface.MONOSPACE
+        set(value) {
+            field = value
+            stylable.dayTypeface = value
+        }
+
+    var weekDayTypeface: Typeface = Typeface.DEFAULT
+        set(value) {
+            field = value
+            stylable.weekDayTypeface = value
+        }
+
+    var monthTypeface: Typeface = Typeface.DEFAULT_BOLD
+        set(value) {
+            field = value
+            stylable.monthTypeface = value
+        }
+
+    @DrawableRes
+    var monthSwitchBackground = R.drawable.ic_cell
+        set(value) {
+            field = value
+            stylable.monthSwitchBackground = value
+        }
+
+    @DrawableRes
+    var selectedWeekBackground = R.drawable.selected_week_back
+        set(value) {
+            field = value
+            stylable.selectedWeekBackground = value
+        }
+
+    @DrawableRes
+    var unselectedWeekBackground = R.drawable.unselected_week
+        set(value) {
+            field = value
+            stylable.unselectedWeekBackground = value
+        }
+
+    @DrawableRes
+    var weekDayNamesBackground = R.drawable.ic_cell_1_line
+        set(value) {
+            field = value
+            stylable.weekDayNamesBackground = value
+        }
 
     private fun updateMonth(position: Int) {
         when {
@@ -59,9 +133,9 @@ class Kalendar(context: Context, val attributeSet: AttributeSet) : FrameLayout(c
 
     private fun makeWrapContent(position: Int) {
         val adapter = viewPager.adapter as MonthPagerAdapter
-        val page = adapter.getPageAt(position)
+        currentMonth= adapter.getPageAt(position)
         viewPager.layoutParams = viewPager.layoutParams.apply {
-            this.height = page?.getCurrentHeight() ?: WRAP_CONTENT
+            this.height = currentMonth?.getCurrentHeight() ?: WRAP_CONTENT
         }
     }
 
@@ -124,7 +198,6 @@ class Kalendar(context: Context, val attributeSet: AttributeSet) : FrameLayout(c
         viewPager = ViewPager(context).apply {
             id = View.generateViewId()
             layoutParams = FrameLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT)
-            setBackgroundColor(pagerColor)
             addOnPageChangeListener(scrollListener)
             adapter = MonthPagerAdapter(this@Kalendar).apply {
                 stylable = this@Kalendar.stylable
@@ -230,6 +303,7 @@ class Kalendar(context: Context, val attributeSet: AttributeSet) : FrameLayout(c
 
     override fun onDayClick(date: Date) {
         changeListener?.onDayClick(date)
+        Log.e("TAG", date.toString())
     }
 
     override fun onStateChanged(isCollapsed: Boolean) {

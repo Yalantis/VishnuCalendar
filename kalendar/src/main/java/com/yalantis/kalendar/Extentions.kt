@@ -1,8 +1,6 @@
 package com.yalantis.kalendar
 
-import android.transition.TransitionManager
 import android.view.View
-import android.view.ViewGroup
 import java.util.*
 import java.util.Calendar.DAY_OF_WEEK
 import java.util.Calendar.MONTH
