@@ -4,10 +4,12 @@ import android.content.Context
 import android.view.Gravity
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.yalantis.kalendar.EMPTY_INT
+import com.yalantis.kalendar.EMPTY_STRING
 import java.util.*
 
 class Day(context: Context) : TextView(context) {
-    var label = ""
+    var label = EMPTY_STRING
         set(value) {
             field = value
             text = value
@@ -28,7 +30,7 @@ class Day(context: Context) : TextView(context) {
             }
         }
 
-    var labelColor = 0
+    var labelColor = EMPTY_INT
         set(value) {
             field = value
             setTextColor(value)

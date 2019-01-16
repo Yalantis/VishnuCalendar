@@ -5,6 +5,7 @@ import android.graphics.Typeface
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.yalantis.kalendar.EMPTY_STRING
 
 class Month(context: Context) : TextView(context) {
     companion object {
@@ -25,7 +26,7 @@ class Month(context: Context) : TextView(context) {
             setOnClickListener { click?.invoke() }
         }
 
-    var label = ""
+    var label = EMPTY_STRING
         set(value) {
             field = value
             text = value

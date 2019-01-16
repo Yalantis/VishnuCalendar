@@ -7,9 +7,15 @@ import java.util.Calendar.MONTH
 
 const val WEEK_OFFSET = 2
 
+const val ADAPTER_BACK_OFFSET = 2
+
+const val ADAPTER_FRONT_OFFSET = 1
+
 const val DAYS_IN_WEEK = 7
 
-const val DEFAULT_DAY_TEXT_SIZE = 18f
+const val MONTH_IN_HALF_YEAR = 6
+
+const val MONTH_IN_YEAR = 12
 
 const val EMPTY_INT = 0
 

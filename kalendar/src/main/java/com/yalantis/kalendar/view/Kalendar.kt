@@ -3,21 +3,17 @@ package com.yalantis.kalendar.view
 import android.content.Context
 import android.graphics.Typeface
 import android.util.AttributeSet
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.FrameLayout
 import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
 import androidx.viewpager.widget.ViewPager
-import com.yalantis.kalendar.MonthPagerAdapter
-import com.yalantis.kalendar.PAGE_OFFSET
-import com.yalantis.kalendar.R
-import com.yalantis.kalendar.START_PAGE
+import com.yalantis.kalendar.*
 import com.yalantis.kalendar.model.KalendarStylable
 import java.util.*
 
-class Kalendar(context: Context, val attributeSet: AttributeSet) : FrameLayout(context, attributeSet),
+class Kalendar(context: Context, attributeSet: AttributeSet) : FrameLayout(context, attributeSet),
     MonthPage.KalendarListener {
 
     private lateinit var viewPager: ViewPager
@@ -35,8 +31,8 @@ class Kalendar(context: Context, val attributeSet: AttributeSet) : FrameLayout(c
     private val scrollListener = object : ViewPager.SimpleOnPageChangeListener() {
         override fun onPageSelected(position: Int) {
             when (position) {
-                1 -> refreshAdapterFront()
-                viewPager.adapter?.count?.minus(2) -> refreshAdapterBack()
+                ADAPTER_FRONT_OFFSET -> refreshAdapterFront()
+                viewPager.adapter?.count?.minus(ADAPTER_BACK_OFFSET) -> refreshAdapterBack()
             }
             makeWrapContent(position)
             updateMonth(position)
@@ -123,7 +119,7 @@ class Kalendar(context: Context, val attributeSet: AttributeSet) : FrameLayout(c
     }
 
     init {
-        parseStyledAttributes()
+        parseStyledAttributes(attributeSet)
         createView()
     }
 
@@ -169,7 +165,7 @@ class Kalendar(context: Context, val attributeSet: AttributeSet) : FrameLayout(c
         val firstDate = adapter.getFirstDate()
         val calendar = Calendar.getInstance()
         calendar.time = firstDate
-        return (0 until 6).map {
+        return (0 until MONTH_IN_HALF_YEAR).map {
             calendar.add(Calendar.MONTH, -1)
             calendar.time
         }.toList()
@@ -184,7 +180,7 @@ class Kalendar(context: Context, val attributeSet: AttributeSet) : FrameLayout(c
         val lastDate = adapter.getLastDate()
         val calendar = Calendar.getInstance()
         calendar.time = lastDate
-        return (0 until 6).map {
+        return (0 until MONTH_IN_HALF_YEAR).map {
             calendar.add(Calendar.MONTH, 1)
             calendar.time
         }.toList()
@@ -264,8 +260,8 @@ class Kalendar(context: Context, val attributeSet: AttributeSet) : FrameLayout(c
     private fun createYear(from: Date): List<Date> {
         val calendar = Calendar.getInstance()
         calendar.time = from
-        calendar.add(Calendar.MONTH, -7)
-        return (0 until 12).map {
+        calendar.add(Calendar.MONTH, -MONTH_IN_HALF_YEAR - 1)
+        return (0 until MONTH_IN_YEAR).map {
             calendar.add(Calendar.MONTH, 1)
             calendar.time
         }.toList()
@@ -275,7 +271,7 @@ class Kalendar(context: Context, val attributeSet: AttributeSet) : FrameLayout(c
      * Method creates object with style attributes for each page
      */
 
-    private fun parseStyledAttributes() {
+    private fun parseStyledAttributes(attributeSet: AttributeSet) {
         stylable = KalendarStylable(context.obtainStyledAttributes(attributeSet, R.styleable.Kalendar))
     }
 
@@ -296,14 +292,13 @@ class Kalendar(context: Context, val attributeSet: AttributeSet) : FrameLayout(c
     override fun onSizeMeasured(monthPage: MonthPage, collapsedHeight: Int, totalHeight: Int) {
         if (isFirstMonthInit.not()) {
             isFirstMonthInit = true
-            makeWrapContent(6)
+            makeWrapContent(START_PAGE)
         }
         changeListener?.onSizeMeasured(monthPage, collapsedHeight, totalHeight)
     }
 
     override fun onDayClick(date: Date) {
         changeListener?.onDayClick(date)
-        Log.e("TAG", date.toString())
     }
 
     override fun onStateChanged(isCollapsed: Boolean) {

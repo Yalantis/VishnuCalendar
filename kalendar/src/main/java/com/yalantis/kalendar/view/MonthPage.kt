@@ -167,11 +167,6 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
         dateManager.setDate(date)
     }
 
-    override fun onVisibilityAggregated(isVisible: Boolean) {
-        super.onVisibilityAggregated(isVisible)
-        if (isVisible) makeWrapContent()
-    }
-
     /**
      * Method provide current selected date
      */
