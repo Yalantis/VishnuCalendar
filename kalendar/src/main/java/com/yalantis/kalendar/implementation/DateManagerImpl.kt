@@ -78,7 +78,7 @@ class DateManagerImpl(private val dateView: DateView) : DateManager {
 
     override fun getWeekDayName(which: Int): String {
         calendar.add(DAY_OF_WEEK, which)
-        val day = calendar.getDisplayName(DAY_OF_WEEK, SHORT, Locale.getDefault())
+        val day = calendar.getDisplayName(DAY_OF_WEEK, SHORT, Locale.getDefault()).toUpperCase()
         calendar.add(DAY_OF_WEEK, -which)
         return day
     }

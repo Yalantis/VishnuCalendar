@@ -78,19 +78,19 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
             invalidate()
         }
 
-    private var dayTypeface: Typeface = Typeface.MONOSPACE
+    private var dayTypeface: Typeface = Typeface.SANS_SERIF
         set(value) {
             field = value
             invalidate()
         }
 
-    private var weekDayTypeface: Typeface = Typeface.DEFAULT
+    private var weekDayTypeface: Typeface = Typeface.SANS_SERIF
         set(value) {
             field = value
             invalidate()
         }
 
-    private var monthTypeface: Typeface = Typeface.DEFAULT_BOLD
+    private var monthTypeface: Typeface = Typeface.SANS_SERIF
         set(value) {
             field = value
             invalidate()
@@ -445,7 +445,7 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
         return Month(context).apply {
             this.type = type
             this.label = label
-            typeface = monthTypeface
+            setTypeface(monthTypeface, Typeface.BOLD)
             textSize = resources.getDimension(R.dimen.default_day_text_size)
             click = clickListener
         }
