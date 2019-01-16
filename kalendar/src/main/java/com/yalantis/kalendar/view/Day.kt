@@ -4,11 +4,12 @@ import android.content.Context
 import android.view.Gravity
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.appcompat.widget.AppCompatTextView
 import com.yalantis.kalendar.EMPTY_INT
 import com.yalantis.kalendar.EMPTY_STRING
 import java.util.*
 
-class Day(context: Context) : TextView(context) {
+class Day(context: Context) : AppCompatTextView(context) {
     var label = EMPTY_STRING
         set(value) {
             field = value

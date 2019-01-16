@@ -2,6 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="com.yalantis.kalendar">
 
-    <application android:allowBackup="true"/>
+    <application android:allowBackup="false"/>
 
 </manifest>

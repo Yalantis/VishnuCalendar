@@ -11,8 +11,6 @@ import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.annotation.ColorRes
-import androidx.annotation.DrawableRes
 import androidx.core.content.ContextCompat
 import com.yalantis.kalendar.*
 import com.yalantis.kalendar.implementation.DateManagerImpl
@@ -51,86 +49,78 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
 
     private val weekDefaultPositions = ArrayList<Float>()
 
-    var totalHeight = EMPTY_INT
+    private var totalHeight = EMPTY_INT
 
-    var isCollapsed = false
+    private var isCollapsed = false
 
-    var collapsedHeight = EMPTY_INT
+    private var collapsedHeight = EMPTY_INT
 
     var listener: KalendarListener? = null
 
     lateinit var pageDate: Date
 
-    @DrawableRes
-    var selectedDayDrawable: Int = R.drawable.day_background
+    private var selectedDayDrawable: Int = R.drawable.day_background
         set(value) {
             field = value
             invalidate()
         }
 
 
-    @ColorRes
-    var dragColor = R.color.light_gray
+    private var dragColor = R.color.light_gray
         set(value) {
             field = value
             invalidate()
         }
 
-    @ColorRes
-    var dragTextColor = R.color.drag_text_color
+    private var dragTextColor = R.color.drag_text_color
         set(value) {
             field = value
             invalidate()
         }
 
-    var dayTypeface: Typeface = Typeface.MONOSPACE
+    private var dayTypeface: Typeface = Typeface.MONOSPACE
         set(value) {
             field = value
             invalidate()
         }
 
-    var weekDayTypeface: Typeface = Typeface.DEFAULT
+    private var weekDayTypeface: Typeface = Typeface.DEFAULT
         set(value) {
             field = value
             invalidate()
         }
 
-    var monthTypeface: Typeface = Typeface.DEFAULT_BOLD
+    private var monthTypeface: Typeface = Typeface.DEFAULT_BOLD
         set(value) {
             field = value
             invalidate()
         }
 
-    @DrawableRes
-    var monthSwitchBackground = R.drawable.ic_cell
+    private var monthSwitchBackground = R.drawable.ic_cell
         set(value) {
             field = value
             invalidate()
         }
 
-    @DrawableRes
-    var selectedWeekBackground = R.drawable.selected_week_back
+    private var selectedWeekBackground = R.drawable.selected_week_back
         set(value) {
             field = value
             invalidate()
         }
 
-    @DrawableRes
-    var unselectedWeekBackground = R.drawable.unselected_week
+    private var unselectedWeekBackground = R.drawable.unselected_week
         set(value) {
             field = value
             invalidate()
         }
 
-    @DrawableRes
-    var weekDayNamesBackground = R.drawable.ic_cell_1_line
+    private var weekDayNamesBackground = R.drawable.ic_cell_1_line
         set(value) {
             field = value
             invalidate()
         }
 
-    @ColorRes
-    var kalendarBackground: Int = android.R.color.white
+    private var kalendarBackground: Int = android.R.color.white
         set(value) {
             field = value
             invalidate()
@@ -163,7 +153,7 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
      * Method allow you to set date and will display it
      */
 
-    fun setDate(date: Date) {
+    private fun setDate(date: Date) {
         dateManager.setDate(date)
     }
 
@@ -370,7 +360,7 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
      * Method makes root view height as wrap content
      */
 
-    fun makeWrapContent() {
+    private fun makeWrapContent() {
         post {
             calculateMeasuredHeight()
             moveManager.setCurrentMaxHeight(totalHeight)

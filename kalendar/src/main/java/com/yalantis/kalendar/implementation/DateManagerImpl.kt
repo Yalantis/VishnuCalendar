@@ -28,12 +28,12 @@ class DateManagerImpl(private val dateView: DateView) : DateManager {
         // find count of normal days
         val daysNormal = findNormalDaysCount()
 
-        val daysAfter = calendar.getDaysAfter()
+        val daysAfter = calendar.getEmptyDaysAmountAtEnd()
 
         // scroll back to first day of month
         calendar.set(DAY_OF_MONTH, 1)
 
-        val daysBefore = calendar.getDaysBefore()
+        val daysBefore = calendar.getEmptyDaysAmountAtStart()
 
         // offset to displayed days start
         calendar.add(Calendar.DAY_OF_YEAR, -daysBefore)

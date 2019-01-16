@@ -49,7 +49,7 @@ fun View.clicks(enabled: Boolean) {
     }
 }
 
-fun Calendar.getDaysAfter() = when (this[DAY_OF_WEEK]) {
+fun Calendar.getEmptyDaysAmountAtEnd() = when (this[DAY_OF_WEEK]) {
     Calendar.SATURDAY -> 0
     Calendar.FRIDAY -> 1
     Calendar.THURSDAY -> 2
@@ -60,7 +60,7 @@ fun Calendar.getDaysAfter() = when (this[DAY_OF_WEEK]) {
     else -> -1
 }
 
-fun Calendar.getDaysBefore() = when (this[DAY_OF_WEEK]) {
+fun Calendar.getEmptyDaysAmountAtStart() = when (this[DAY_OF_WEEK]) {
     Calendar.SATURDAY -> 6
     Calendar.FRIDAY -> 5
     Calendar.THURSDAY -> 4

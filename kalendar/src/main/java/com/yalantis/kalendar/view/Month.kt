@@ -5,9 +5,10 @@ import android.graphics.Typeface
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.appcompat.widget.AppCompatTextView
 import com.yalantis.kalendar.EMPTY_STRING
 
-class Month(context: Context) : TextView(context) {
+class Month(context: Context) : AppCompatTextView(context) {
     companion object {
         const val TYPE_LEFT = 0
         const val TYPE_MID = 1

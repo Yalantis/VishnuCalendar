@@ -8,7 +8,7 @@ import com.yalantis.kalendar.model.KalendarStylable
 import com.yalantis.kalendar.view.MonthPage
 import java.util.*
 
-class MonthPagerAdapter(val listener: MonthPage.KalendarListener) : PagerAdapter() {
+class MonthPagerAdapter(private val listener: MonthPage.KalendarListener) : PagerAdapter() {
 
     private val months = mutableListOf<Date>()
 
