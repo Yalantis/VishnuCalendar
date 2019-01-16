@@ -1,1 +1,1 @@
-include ':kalendar'
+include ':kalendar', ':sample'
