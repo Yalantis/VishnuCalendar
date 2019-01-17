@@ -118,14 +118,14 @@ class MoveManagerImpl(private val viewProvider: ViewProvider) : MoveManager {
     private fun calculateOffsets(touchY: Float) {
         val newHeight = (totalHeight * (touchY / totalHeight)) + dragHeight
 
-        when  {
-            touchY > topLimit && touchY < bottomLimit -> {
+        when {
+            touchY in topLimit..bottomLimit -> {
                 performMovement(newHeight, touchY)
             }
             touchY > bottomLimit -> {
                 performMovement(bottomLimit.toFloat() + dragHeight, bottomLimit.toFloat())
             }
-            touchY <= topLimit -> {
+            touchY < topLimit -> {
                 viewProvider.moveWeek(selectedWeek, topLimit.toFloat())
                 viewProvider.setViewHeight(minHeight + dragHeight)
                 viewProvider.setDragTop(minHeight.toFloat())
@@ -169,21 +169,19 @@ class MoveManagerImpl(private val viewProvider: ViewProvider) : MoveManager {
 
     private fun controlAboveSelected(touchY: Float, overScroll: Boolean = false) {
         val weeksAbove = weekCount - (weekCount - selectedWeek)
-        var weekTop: Float
+        val halfWeek = weekHeight / 2
         var weekBottom: Float
 
         for (week in 0 until weeksAbove) {
-            weekTop = defaultPositions[week] - weekHeight / 2
             weekBottom = defaultPositions[week]
 
             when {
                 overScroll -> viewProvider.applyAlpha(week, ALPHA_INVISIBLE)
 
                 // makes sure that week hide
-                touchY > weekTop && touchY < weekBottom -> {
+                touchY <= defaultPositions[week + 1] - halfWeek -> {
                     viewProvider.applyAlpha(week, ALPHA_INVISIBLE)
                 }
-                // makes sure that week show
                 touchY > weekBottom + weekHeight -> {
                     viewProvider.applyAlpha(week, ALPHA_VISIBLE)
                 }
@@ -196,6 +194,8 @@ class MoveManagerImpl(private val viewProvider: ViewProvider) : MoveManager {
      */
 
     private fun controlBelowSelected(touchY: Float, overScroll: Boolean = false) {
+        val halfWeek = weekHeight / 2
+
         for (week in selectedWeek + 1 until weekCount) {
             when {
                 overScroll -> viewProvider.applyAlpha(week, ALPHA_INVISIBLE)
@@ -205,7 +205,7 @@ class MoveManagerImpl(private val viewProvider: ViewProvider) : MoveManager {
                     viewProvider.applyAlpha(week, ALPHA_VISIBLE)
                 }
                 // touch above default top position
-                touchY < defaultPositions[week] - weekHeight -> {
+                touchY <= defaultPositions[week] - halfWeek -> {
                     viewProvider.applyAlpha(week, ALPHA_INVISIBLE)
                 }
             }
