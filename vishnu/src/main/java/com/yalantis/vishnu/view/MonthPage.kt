@@ -17,6 +17,7 @@ import com.yalantis.vishnu.implementation.DateManagerImpl
 import com.yalantis.vishnu.implementation.MoveManagerImpl
 import com.yalantis.vishnu.interfaces.*
 import com.yalantis.vishnu.model.*
+import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -129,20 +130,20 @@ class MonthPage(context: Context, stylable: VishnuStylable) : LinearLayout(conte
     }
 
     private fun obtainStylable(stylable: VishnuStylable) {
-        dragText                  = stylable.dragText
-        dragColor                 = stylable.dragColor
-        dragHeight                = stylable.dragHeight
-        dayTypeface               = stylable.dayTypeface
-        dragTextSize              = stylable.dragTextSize
-        dragTextColor             = stylable.dragTextColor
-        monthTypeface             = stylable.monthTypeface
-        weekDayTypeface           = stylable.weekDayTypeface
-        kalendarBackground        = stylable.pageBackground
-        selectedDayDrawable       = stylable.selectedDayDrawable
-        monthSwitchBackground     = stylable.monthSwitchBackground
-        weekDayNamesBackground    = stylable.weekDayNamesBackground
-        selectedWeekBackground    = stylable.selectedWeekBackground
-        unselectedWeekBackground  = stylable.unselectedWeekBackground
+        dragText = stylable.dragText
+        dragColor = stylable.dragColor
+        dragHeight = stylable.dragHeight
+        dayTypeface = stylable.dayTypeface
+        dragTextSize = stylable.dragTextSize
+        dragTextColor = stylable.dragTextColor
+        monthTypeface = stylable.monthTypeface
+        weekDayTypeface = stylable.weekDayTypeface
+        kalendarBackground = stylable.pageBackground
+        selectedDayDrawable = stylable.selectedDayDrawable
+        monthSwitchBackground = stylable.monthSwitchBackground
+        weekDayNamesBackground = stylable.weekDayNamesBackground
+        selectedWeekBackground = stylable.selectedWeekBackground
+        unselectedWeekBackground = stylable.unselectedWeekBackground
 
     }
 
@@ -246,6 +247,7 @@ class MonthPage(context: Context, stylable: VishnuStylable) : LinearLayout(conte
             if (moveManager.isInAction.not() && moveManager.isCollapsed.not()) {
                 changeDayColors(day)
                 selectWeek(day)
+                applyDragText(dragTextFor(day))
             } else {
                 actionQueue.add(KAction(ACTION_SELECT_DAY))
                 moveManager.expand()
@@ -253,6 +255,33 @@ class MonthPage(context: Context, stylable: VishnuStylable) : LinearLayout(conte
             dateManager.setCurrentDate(day.date)
         }
     }
+
+    private fun applyDragText(dragText: String) {
+        (getChildAt(childCount - 1) as TextView).text = dragText
+    }
+
+    private fun dragTextFor(day: Day): String {
+        val calendar = Calendar.getInstance()
+        calendar.add(Calendar.DAY_OF_YEAR, -1)
+        val yesterday = formatDate(calendar.time)
+        calendar.add(Calendar.DAY_OF_YEAR, 1)
+        val today = formatDate(calendar.time)
+        calendar.add(Calendar.DAY_OF_YEAR, 1)
+        val tomorrow = formatDate(calendar.time)
+
+        calendar.time = day.date
+
+        val selectedDay = formatDate(calendar.time)
+
+        return when (selectedDay) {
+            today -> resources.getString(R.string.today)
+            yesterday -> resources.getString(R.string.yesterday)
+            tomorrow -> resources.getString(R.string.tomorrow)
+            else -> selectedDay
+        }
+    }
+
+    private fun formatDate(date: Date) = SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(date)
 
     /**
      * Method creates day view which will be later displayed
@@ -431,6 +460,7 @@ class MonthPage(context: Context, stylable: VishnuStylable) : LinearLayout(conte
         val weekHeight = getWeekHeight()
         collapsedHeight = switchHeight + weekHeight * 2 + dragHeight
         totalHeight = switchHeight + (weekHeight * (childCount - 2)) + dragHeight
+
         var weekBottom = switchHeight + weekHeight
         for (i in 0 until childCount - 1) {
             weekBottom += weekHeight

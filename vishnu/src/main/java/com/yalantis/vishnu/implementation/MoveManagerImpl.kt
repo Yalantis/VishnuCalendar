@@ -118,27 +118,36 @@ class MoveManagerImpl(private val viewProvider: ViewProvider) : MoveManager {
     private fun calculateOffsets(touchY: Float) {
         val newHeight = (totalHeight * (touchY / totalHeight)) + dragHeight
 
-        if (touchY > topLimit) {
-
-            viewProvider.setViewHeight(newHeight.toInt())
-            viewProvider.setDragTop(touchY)
-
-            for (week in 0 until weekCount) {
-                if (week < selectedWeek) {
-                    moveWeek(week, viewProvider.getWeekBottom(week), touchY - weekHeight, defaultPositions[week])
-                } else {
-                    moveWeek(week, viewProvider.getWeekBottom(week), touchY, defaultPositions[week])
-                }
+        when  {
+            touchY > topLimit && touchY < bottomLimit -> {
+                performMovement(newHeight, touchY)
             }
-            controlAboveSelected(touchY)
-            controlBelowSelected(touchY)
-        } else {
-            viewProvider.moveWeek(selectedWeek, topLimit.toFloat())
-            viewProvider.setViewHeight(minHeight + dragHeight)
-            viewProvider.setDragTop(minHeight.toFloat())
-            controlAboveSelected(touchY, overScroll = true)
-            controlBelowSelected(touchY, overScroll = true)
+            touchY > bottomLimit -> {
+                performMovement(bottomLimit.toFloat() + dragHeight, bottomLimit.toFloat())
+            }
+            touchY <= topLimit -> {
+                viewProvider.moveWeek(selectedWeek, topLimit.toFloat())
+                viewProvider.setViewHeight(minHeight + dragHeight)
+                viewProvider.setDragTop(minHeight.toFloat())
+                controlAboveSelected(touchY, overScroll = true)
+                controlBelowSelected(touchY, overScroll = true)
+            }
         }
+    }
+
+    private fun performMovement(newHeight: Float, touchY: Float) {
+        viewProvider.setViewHeight(newHeight.toInt())
+        viewProvider.setDragTop(touchY)
+
+        for (week in 0 until weekCount) {
+            if (week < selectedWeek) {
+                moveWeek(week, viewProvider.getWeekBottom(week), touchY - weekHeight, defaultPositions[week])
+            } else {
+                moveWeek(week, viewProvider.getWeekBottom(week), touchY, defaultPositions[week])
+            }
+        }
+        controlAboveSelected(touchY)
+        controlBelowSelected(touchY)
     }
 
     /**
