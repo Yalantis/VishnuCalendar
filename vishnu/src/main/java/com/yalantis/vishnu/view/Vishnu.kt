@@ -1,4 +1,4 @@
-package com.yalantis.kalendar.view
+package com.yalantis.vishnu.view
 
 import android.content.Context
 import android.graphics.Typeface
@@ -9,24 +9,24 @@ import android.widget.FrameLayout
 import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
 import androidx.viewpager.widget.ViewPager
-import com.yalantis.kalendar.*
-import com.yalantis.kalendar.model.KalendarStylable
+import com.yalantis.vishnu.*
+import com.yalantis.vishnu.interfaces.VishnuListener
+import com.yalantis.vishnu.model.VishnuStylable
 import java.util.*
 
-class Kalendar(context: Context, attributeSet: AttributeSet) : FrameLayout(context, attributeSet),
-    MonthPage.KalendarListener {
+class Vishnu(context: Context, attributeSet: AttributeSet) : FrameLayout(context, attributeSet), VishnuListener {
 
     private lateinit var viewPager: ViewPager
 
     private var isFirstMonthInit = false
 
-    private lateinit var stylable: KalendarStylable
+    private lateinit var stylable: VishnuStylable
 
     private var previousPage = START_PAGE
 
     private var currentMonth: MonthPage? = null
 
-    var changeListener: MonthPage.KalendarListener? = null
+    var changeListener: VishnuListener? = null
 
     private val scrollListener = object : ViewPager.SimpleOnPageChangeListener() {
         override fun onPageSelected(position: Int) {
@@ -129,7 +129,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : FrameLayout(conte
 
     private fun makeWrapContent(position: Int) {
         val adapter = viewPager.adapter as MonthPagerAdapter
-        currentMonth= adapter.getPageAt(position)
+        currentMonth = adapter.getPageAt(position)
         viewPager.layoutParams = viewPager.layoutParams.apply {
             this.height = currentMonth?.getCurrentHeight() ?: WRAP_CONTENT
         }
@@ -195,8 +195,8 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : FrameLayout(conte
             id = View.generateViewId()
             layoutParams = FrameLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT)
             addOnPageChangeListener(scrollListener)
-            adapter = MonthPagerAdapter(this@Kalendar).apply {
-                stylable = this@Kalendar.stylable
+            adapter = MonthPagerAdapter(this@Vishnu).apply {
+                stylable = this@Vishnu.stylable
                 setMonths(createYear(Calendar.getInstance().time))
             }
         }
@@ -272,7 +272,7 @@ class Kalendar(context: Context, attributeSet: AttributeSet) : FrameLayout(conte
      */
 
     private fun parseStyledAttributes(attributeSet: AttributeSet) {
-        stylable = KalendarStylable(context.obtainStyledAttributes(attributeSet, R.styleable.Kalendar))
+        stylable = VishnuStylable(context, context.obtainStyledAttributes(attributeSet, R.styleable.Vishnu))
     }
 
 

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <declare-styleable name="Kalendar">
+    <declare-styleable name="Vishnu">
         <attr name="dragText" format="string"/>
         <attr name="dragHeight" format="dimension"/>
         <attr name="dragTextSize" format="dimension"/>

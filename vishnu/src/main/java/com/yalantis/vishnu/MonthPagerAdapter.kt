@@ -1,20 +1,21 @@
-package com.yalantis.kalendar
+package com.yalantis.vishnu
 
 import android.util.SparseArray
 import android.view.View
 import android.view.ViewGroup
 import androidx.viewpager.widget.PagerAdapter
-import com.yalantis.kalendar.model.KalendarStylable
-import com.yalantis.kalendar.view.MonthPage
+import com.yalantis.vishnu.interfaces.VishnuListener
+import com.yalantis.vishnu.model.VishnuStylable
+import com.yalantis.vishnu.view.MonthPage
 import java.util.*
 
-class MonthPagerAdapter(private val listener: MonthPage.KalendarListener) : PagerAdapter() {
+class MonthPagerAdapter(private val listener: VishnuListener) : PagerAdapter() {
 
     private val months = mutableListOf<Date>()
 
     private val pages = SparseArray<MonthPage>()
 
-    lateinit var stylable: KalendarStylable
+    lateinit var stylable: VishnuStylable
 
     override fun isViewFromObject(p0: View, p1: Any) = p0 === p1
 

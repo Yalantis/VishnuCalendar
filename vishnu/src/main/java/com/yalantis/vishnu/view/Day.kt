@@ -1,12 +1,12 @@
-package com.yalantis.kalendar.view
+package com.yalantis.vishnu.view
 
 import android.content.Context
 import android.view.Gravity
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatTextView
-import com.yalantis.kalendar.EMPTY_INT
-import com.yalantis.kalendar.EMPTY_STRING
+import com.yalantis.vishnu.EMPTY_INT
+import com.yalantis.vishnu.EMPTY_STRING
 import java.util.*
 
 class Day(context: Context) : AppCompatTextView(context) {

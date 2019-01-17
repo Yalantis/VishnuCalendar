@@ -1,4 +1,4 @@
-package com.yalantis.kalendar.interfaces
+package com.yalantis.vishnu.interfaces
 
 import java.util.*
 

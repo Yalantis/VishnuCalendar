@@ -1,4 +1,4 @@
-package com.yalantis.kalendar.model
+package com.yalantis.vishnu.model
 
 const val ACTION_NEXT_MONTH = 0
 const val ACTION_PREV_MONTH = 1

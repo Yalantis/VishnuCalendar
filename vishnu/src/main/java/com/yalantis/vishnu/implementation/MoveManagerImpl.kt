@@ -1,12 +1,12 @@
-package com.yalantis.kalendar.implementation
+package com.yalantis.vishnu.implementation
 
 import android.animation.Animator
 import android.animation.ValueAnimator
 import android.view.MotionEvent
 import android.view.animation.DecelerateInterpolator
-import com.yalantis.kalendar.*
-import com.yalantis.kalendar.interfaces.MoveManager
-import com.yalantis.kalendar.interfaces.ViewProvider
+import com.yalantis.vishnu.*
+import com.yalantis.vishnu.interfaces.MoveManager
+import com.yalantis.vishnu.interfaces.ViewProvider
 
 class MoveManagerImpl(private val viewProvider: ViewProvider) : MoveManager {
 

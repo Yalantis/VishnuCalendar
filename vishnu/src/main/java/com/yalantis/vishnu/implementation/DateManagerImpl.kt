@@ -1,8 +1,8 @@
-package com.yalantis.kalendar.implementation
+package com.yalantis.vishnu.implementation
 
-import com.yalantis.kalendar.*
-import com.yalantis.kalendar.interfaces.DateManager
-import com.yalantis.kalendar.interfaces.DateView
+import com.yalantis.vishnu.*
+import com.yalantis.vishnu.interfaces.DateManager
+import com.yalantis.vishnu.interfaces.DateView
 import java.util.*
 import java.util.Calendar.*
 

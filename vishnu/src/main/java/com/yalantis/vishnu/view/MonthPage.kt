@@ -1,4 +1,4 @@
-package com.yalantis.kalendar.view
+package com.yalantis.vishnu.view
 
 import android.animation.LayoutTransition
 import android.annotation.SuppressLint
@@ -12,19 +12,16 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
-import com.yalantis.kalendar.*
-import com.yalantis.kalendar.implementation.DateManagerImpl
-import com.yalantis.kalendar.implementation.MoveManagerImpl
-import com.yalantis.kalendar.interfaces.DateManager
-import com.yalantis.kalendar.interfaces.DateView
-import com.yalantis.kalendar.interfaces.MoveManager
-import com.yalantis.kalendar.interfaces.ViewProvider
-import com.yalantis.kalendar.model.*
+import com.yalantis.vishnu.*
+import com.yalantis.vishnu.implementation.DateManagerImpl
+import com.yalantis.vishnu.implementation.MoveManagerImpl
+import com.yalantis.vishnu.interfaces.*
+import com.yalantis.vishnu.model.*
 import java.util.*
 import kotlin.collections.ArrayList
 
 @SuppressLint("ViewConstructor")
-class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(context), ViewProvider,
+class MonthPage(context: Context, stylable: VishnuStylable) : LinearLayout(context), ViewProvider,
     Day.OnDayClickListener, DateView {
 
     private var dragTextSize = EMPTY_INT
@@ -55,7 +52,7 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
 
     private var collapsedHeight = EMPTY_INT
 
-    var listener: KalendarListener? = null
+    var listener: VishnuListener? = null
 
     lateinit var pageDate: Date
 
@@ -131,7 +128,7 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
         obtainStylable(stylable)
     }
 
-    private fun obtainStylable(stylable: KalendarStylable) {
+    private fun obtainStylable(stylable: VishnuStylable) {
         dragText                  = stylable.dragText
         dragColor                 = stylable.dragColor
         dragHeight                = stylable.dragHeight
@@ -591,36 +588,5 @@ class MonthPage(context: Context, stylable: KalendarStylable) : LinearLayout(con
         val week = getChildAt(position + WEEK_OFFSET)
         week.y = newTop - week.height
         week.layoutParams = week.layoutParams.apply { height = week.height }
-    }
-
-    interface KalendarListener {
-        /**
-         * Invokes when user clicks on current page day view
-         */
-        fun onDayClick(date: Date)
-
-        /**
-         * Invokes when current page collapsed/expanded state changed
-         */
-
-        fun onStateChanged(isCollapsed: Boolean)
-
-        /**
-         * Invokes when current page height changed
-         */
-
-        fun onHeightChanged(newHeight: Int)
-
-        /**
-         * Invokes when clicks on next/previous month
-         */
-
-        fun onMonthChanged(forward: Boolean, date: Date? = null)
-
-        /**
-         * Invokes when current page size has been measured
-         */
-
-        fun onSizeMeasured(monthPage: MonthPage, collapsedHeight: Int, totalHeight: Int)
     }
 }
