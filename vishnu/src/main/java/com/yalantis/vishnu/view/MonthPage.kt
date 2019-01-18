@@ -9,6 +9,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
@@ -423,7 +424,7 @@ class MonthPage(context: Context, stylable: VishnuStylable) : LinearLayout(conte
             textAlignment = View.TEXT_ALIGNMENT_CENTER
             setBackgroundColor(dragColor)
         })
-        getChildAt(childCount - 1).layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, dragHeight).apply {
+        getChildAt(childCount - 1).layoutParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT).apply {
             gravity = Gravity.BOTTOM
         }
     }
@@ -458,6 +459,12 @@ class MonthPage(context: Context, stylable: VishnuStylable) : LinearLayout(conte
     private fun calculateMeasuredHeight() {
         val switchHeight = getChildAt(0).measuredHeight
         val weekHeight = getWeekHeight()
+        val dragView = getChildAt(childCount - 1)
+
+        measureChild(dragView, measuredWidth, measuredHeight)
+        dragHeight = dragView.measuredHeight
+        dragView.layoutParams = dragView.layoutParams.apply { height = dragHeight }
+
         collapsedHeight = switchHeight + weekHeight * 2 + dragHeight
         totalHeight = switchHeight + (weekHeight * (childCount - 2)) + dragHeight
 
@@ -572,7 +579,7 @@ class MonthPage(context: Context, stylable: VishnuStylable) : LinearLayout(conte
         }
     }
 
-    override fun applyAlpha(week: Int, alpha: Float) {
+    override fun applyWeekAlpha(week: Int, alpha: Float) {
         getChildAt(week + WEEK_OFFSET).alpha = alpha
     }
 
@@ -592,13 +599,8 @@ class MonthPage(context: Context, stylable: VishnuStylable) : LinearLayout(conte
 
     override fun getWeekCount() = childCount - WEEK_OFFSET - 1 // -1 cuz dragView
 
-    override fun setDragTop(newDragTop: Float) {
+    override fun moveDragView(newDragTop: Float) {
         getChildAt(childCount - 1).y = newDragTop
-    }
-
-    override fun setWeekHeight(i: Int, weekHeight: Int) {
-        val week = getChildAt(i)
-        week.layoutParams = week.layoutParams.apply { height = weekHeight }
     }
 
     override fun getDragTop() = getChildAt(childCount - 1).y

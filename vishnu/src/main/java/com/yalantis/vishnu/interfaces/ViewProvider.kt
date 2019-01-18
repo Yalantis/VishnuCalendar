@@ -42,7 +42,7 @@ interface ViewProvider {
      * Change drag area top side
      */
 
-    fun setDragTop(newDragTop: Float)
+    fun moveDragView(newDragTop: Float)
 
     /**
      * Return week bottom position
@@ -81,12 +81,6 @@ interface ViewProvider {
     fun getViewTop(): Int
 
     /**
-     * Change week height
-     */
-
-    fun setWeekHeight(i: Int, weekHeight: Int)
-
-    /**
      * Return drag area height
      */
 
@@ -102,7 +96,7 @@ interface ViewProvider {
      * Applies alpha to the week
      */
 
-    fun applyAlpha(week: Int, alpha: Float)
+    fun applyWeekAlpha(week: Int, alpha: Float)
 
     /**
      * Request for weeks default positions
