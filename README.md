@@ -1,7 +1,7 @@
-# Kalendar-Android
+# VishnuCalendar
 
-![Preview](https://github.com/p1nkydev/Sample/blob/master/demo_collapse_expand.gif)
-![Preview](https://github.com/p1nkydev/Sample/blob/master/demo_swipe.gif)
+![Preview](https://github.com/Yalantis/VishnuCalendar/blob/develop/demo_collapse_expand.gif)
+![Preview](https://github.com/Yalantis/VishnuCalendar/blob/develop/demo_swipe.gif)
 
 ## Requirements
 - Android SDK 17+
