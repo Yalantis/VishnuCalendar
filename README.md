@@ -1,7 +1,7 @@
 # VishnuCalendar
 
-![Preview](https://github.com/Yalantis/VishnuCalendar/blob/develop/demo_collapse_expand.gif)
-![Preview](https://github.com/Yalantis/VishnuCalendar/blob/develop/demo_swipe.gif)
+![Preview](https://github.com/Yalantis/VishnuCalendar/blob/develop/swipe_demo.gif)
+![Preview](https://github.com/Yalantis/VishnuCalendar/blob/develop/week_collapse.gif)
 
 ## Requirements
 - Android SDK 17+
