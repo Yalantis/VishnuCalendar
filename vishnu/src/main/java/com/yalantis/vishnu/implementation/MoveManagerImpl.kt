@@ -119,7 +119,7 @@ class MoveManagerImpl(private val viewProvider: ViewProvider) : MoveManager {
         val newHeight = (totalHeight * (touchY / totalHeight)) + dragHeight
 
         when {
-            touchY in topLimit..bottomLimit -> {
+            touchY.toInt() in topLimit..bottomLimit -> {
                 performMovement(newHeight, touchY)
             }
             touchY > bottomLimit -> {
