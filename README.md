@@ -112,7 +112,7 @@ fun onSizeMeasured(monthPage: MonthPage, collapsedHeight: Int, totalHeight: Int)
 
 ## Let us know!
 
-We’d be really happy if you sent us links to your projects where you use our component. Just send an email to github@yalantis.com And do let us know if you have any questions or suggestion regarding the animation. 
+We’d be really happy If you sent us links to your projects where you use our component. Just send an email to github@yalantis.com And do let us know if you have any questions or suggestion regarding the animation. 
 
 ## License
 
