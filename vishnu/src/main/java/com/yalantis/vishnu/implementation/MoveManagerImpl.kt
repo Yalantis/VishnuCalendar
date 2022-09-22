@@ -17,13 +17,13 @@ class MoveManagerImpl(private val viewProvider: ViewProvider) : MoveManager {
     private var startPoint = EMPTY_FLOAT
 
     private val finishListener = object : Animator.AnimatorListener {
-        override fun onAnimationRepeat(animation: Animator?) {}
-        override fun onAnimationCancel(animation: Animator?) {}
-        override fun onAnimationStart(animation: Animator?) {
+        override fun onAnimationRepeat(animation: Animator) {}
+        override fun onAnimationCancel(animation: Animator) {}
+        override fun onAnimationStart(animation: Animator) {
             isInAction = true
         }
 
-        override fun onAnimationEnd(animation: Animator?) {
+        override fun onAnimationEnd(animation: Animator) {
             isInAction = false
             isCollapsed = isCollapsed.not()
             viewProvider.moveStateChanged(isCollapsed, selectedWeek)
@@ -119,7 +119,7 @@ class MoveManagerImpl(private val viewProvider: ViewProvider) : MoveManager {
         val newHeight = (totalHeight * (touchY / totalHeight)) + dragHeight
 
         when {
-            touchY in topLimit..bottomLimit -> {
+            touchY in topLimit.toFloat()..bottomLimit.toFloat() -> {
                 performMovement(newHeight, touchY)
             }
             touchY > bottomLimit -> {
